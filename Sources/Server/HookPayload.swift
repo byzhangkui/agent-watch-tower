@@ -5,7 +5,7 @@ import Foundation
 struct HookPayload: Codable {
     // Common fields
     let sessionId: String
-    let cwd: String
+    let cwd: String?
     let hookEventName: String
     let transcriptPath: String?
 

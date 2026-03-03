@@ -127,7 +127,7 @@ struct ClaudeCodeAdapter: AgentAdapter {
             return AgentSession.create(
                 id: payload.sessionId,
                 agentType: .claudeCode,
-                projectDir: payload.cwd,
+                projectDir: payload.cwd ?? "Unknown Directory",
                 model: payload.model
             )
         }

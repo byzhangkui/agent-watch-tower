@@ -11,11 +11,16 @@ final class EventRouter: Sendable {
 
     /// Handle raw HTTP body data from a hook event.
     func handle(_ data: Data) {
-        guard let payload = try? JSONDecoder().decode(HookPayload.self, from: data) else {
-            return
-        }
-        Task {
-            await processor.process(payload)
+        do {
+            let payload = try JSONDecoder().decode(HookPayload.self, from: data)
+            Task {
+                await processor.process(payload)
+            }
+        } catch {
+            print("Failed to decode hook payload: \(error)")
+            if let jsonString = String(data: data, encoding: .utf8) {
+                print("Raw payload: \(jsonString)")
+            }
         }
     }
 }
