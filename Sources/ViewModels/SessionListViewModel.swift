@@ -43,7 +43,10 @@ final class SessionListViewModel {
     }
 
     func reload() {
-        sessions = (try? sessionStore.todaySessions()) ?? []
+        // Keep existing sessions on DB error to avoid flickering / disappearing
+        if let fetched = try? sessionStore.todaySessions() {
+            sessions = fetched
+        }
 
         if let usage = try? dailyUsageStore.todayTotalUsage() {
             dailyTokens = usage.totalTokens

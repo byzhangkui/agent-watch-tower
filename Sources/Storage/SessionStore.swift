@@ -35,7 +35,7 @@ struct SessionStore {
                     ["running", "thinking", "waiting_for_user"].contains(Column("status"))
                     || (Column("started_at") >= todayStart)
                 )
-                .order(Column("updated_at").desc)
+                .order(Column("started_at").desc)
                 .fetchAll(db)
         }
     }
