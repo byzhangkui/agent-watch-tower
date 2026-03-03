@@ -58,6 +58,19 @@
 - **Git Commit ID:**
   af594a5bbfbb8e9acaf8609beeb58087d110b038
 
+## [2026-03-04] 点击设置按钮无反应（根本原因修复）
+
+- **遇到了什么问题：**
+  在 SwiftUI App 生命周期（`@main struct ... : App`）下，`NSApp.delegate as? AppDelegate` 这个类型转换会失败（SwiftUI 内部将 delegate 包裹在自己的代理对象中），导致 `openSettings()` 的两个分支都无法正确执行：主路径转型失败，回退路径 `sendAction("showSettingsWindow:")` 在 `.accessory` 模式下也无响应。结果就是点击设置按钮完全没有任何反应。
+
+- **如何解决的：**
+  将 `showSettings` 从"在视图内部通过 `NSApp.delegate` 查找 AppDelegate"改为**直接以闭包形式注入** `PanelRootView`（新增 `onShowSettings: () -> Void` 参数），在 `AppDelegate` 创建 `PanelRootView` 时传入 `{ [weak self] in self?.showSettings() }`。彻底绕过 AppKit/SwiftUI 边界的 delegate 转型问题。
+
+- **以后如何避免：**
+  在 SwiftUI App 生命周期中，**不要依赖 `NSApp.delegate as? MyAppDelegate`**，这个转型在 SwiftUI 生命周期下不可靠。需要从 AppKit 层调用功能时，应该通过闭包注入或 NotificationCenter 而非尝试反向查找 delegate。
+
+- **Git Commit ID:** (待填写)
+
 ## [2026-03-03] 点击设置按钮无反应
 
 - **遇到了什么问题：**

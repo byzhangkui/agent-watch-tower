@@ -7,6 +7,7 @@ struct PanelRootView: View {
     let pinStateManager: PinStateManager
     let sessionStore: SessionStore
     let eventStore: EventStore
+    let onShowSettings: () -> Void
 
     var body: some View {
         NavigationStack {
@@ -15,7 +16,7 @@ struct PanelRootView: View {
                 PanelToolbarView(
                     isPinned: pinStateManager.isPinned,
                     onPin: { pinStateManager.togglePin() },
-                    onSettings: { openSettings() }
+                    onSettings: onShowSettings
                 )
 
                 Divider()
@@ -42,18 +43,6 @@ struct PanelRootView: View {
                 maxHeight: Constants.panelMaxHeight
             )
         }
-    }
-
-    @Environment(\.openWindow) private var openWindow
-
-    private func openSettings() {
-        #if canImport(AppKit)
-        if let appDelegate = NSApp.delegate as? AppDelegate {
-            appDelegate.showSettings()
-        } else {
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-        }
-        #endif
     }
 }
 #endif

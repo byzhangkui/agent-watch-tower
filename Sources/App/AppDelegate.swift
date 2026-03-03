@@ -72,7 +72,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 viewModel: self.sessionListVM,
                 pinStateManager: self.pinStateManager,
                 sessionStore: self.sessionStore,
-                eventStore: self.eventStore
+                eventStore: self.eventStore,
+                onShowSettings: { [weak self] in self?.showSettings() }
             )
             return NSHostingView(rootView: rootView)
         }
@@ -92,7 +93,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             viewModel: sessionListVM,
             pinStateManager: pinStateManager,
             sessionStore: sessionStore,
-            eventStore: eventStore
+            eventStore: eventStore,
+            onShowSettings: { [weak self] in self?.showSettings() }
         )
         popoverManager = PopoverManager(contentView: realRootView)
 
