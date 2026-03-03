@@ -71,7 +71,7 @@
 - **以后如何避免：**
   在 `.accessory` 模式应用中展示窗口时，务必先激活 app（`NSApp.activate`），再调用 `makeKeyAndOrderFront`。如果窗口在 Popover 内触发，要先关闭 Popover，再展示新窗口，避免窗口层级冲突。
 
-- **Git Commit ID:** (待填写)
+- **Git Commit ID:** 2865e53
 
 ## [2026-03-03] 工具调用事件 (PreToolUse/PostToolUse) 丢失，列表为空
 
