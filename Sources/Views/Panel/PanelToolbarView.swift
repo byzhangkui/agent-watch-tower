@@ -23,6 +23,18 @@ struct PanelToolbarView: View {
             .buttonStyle(.plain)
             .help("Settings")
 
+            Button(action: {
+                #if canImport(AppKit)
+                NSApp.terminate(nil)
+                #endif
+            }) {
+                Image(systemName: "power")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .help("Quit Application")
+
             Button(action: onPin) {
                 Image(systemName: isPinned ? "pin.slash.fill" : "pin.fill")
                     .font(.body)
