@@ -4,10 +4,29 @@ import SwiftUI
 /// Detailed view for a single session with event timeline, tool usage, and token stats.
 struct SessionDetailView: View {
     let viewModel: SessionDetailViewModel
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
+                // Back button
+                HStack {
+                    Button(action: { dismiss() }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                            Text("Back")
+                        }
+                        .font(.subheadline)
+                        .foregroundStyle(.blue)
+                    }
+                    .buttonStyle(.plain)
+                    Spacer()
+                }
+                .padding(.horizontal, Constants.contentPadding)
+                .padding(.vertical, 8)
+
+                Divider()
+
                 // Session header
                 sessionHeader
 
