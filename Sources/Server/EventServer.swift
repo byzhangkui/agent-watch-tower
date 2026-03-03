@@ -18,7 +18,7 @@ final class EventServer {
         server.POST["/events"] = { [weak self] request in
             let body = Data(request.body)
             self?.eventRouter.handle(body)
-            return .ok(.text("ok"))
+            return .ok(.json([String: String]()))
         }
 
         // Per-event-type endpoints for structured hook configuration
@@ -32,7 +32,7 @@ final class EventServer {
             server.POST["/events/\(path)"] = { [weak self] request in
                 let body = Data(request.body)
                 self?.eventRouter.handle(body)
-                return .ok(.text("ok"))
+                return .ok(.json([String: String]()))
             }
         }
 
