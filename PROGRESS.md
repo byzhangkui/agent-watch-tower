@@ -58,6 +58,24 @@
 - **Git Commit ID:**
   af594a5bbfbb8e9acaf8609beeb58087d110b038
 
+## [2026-03-04] Session 出现慢 / 状态更新有延迟
+
+- **遇到了什么问题：**
+  1. 用户在 Claude Code 中输入内容后，session 卡片要过好一会才出现在列表中。
+  2. Session 状态（如 running → completed）切换也有明显延迟；工具执行完毕后 `currentAction` 还残留着上一个工具的文字。
+
+- **如何解决的：**
+  1. **新增 `UserPromptSubmit` hook**：该 hook 在用户按下 Enter 时立刻触发（早于任何工具调用），在 `HookInstaller` 和 `EventServer` 中注册此路由，`ClaudeCodeAdapter` 处理后立即创建 session，做到近实时出现。
+  2. **周期性兜底刷新**：在 `SessionListViewModel` 中加入 2 秒 `Timer`，即使某个 hook 通知被漏掉，UI 也会在 2 秒内同步最新状态。
+  3. **`PostToolUse` 后清空 `currentAction`**：工具完成后将 `currentAction = nil`，避免 Claude 在思考阶段显示上一个工具的残留文本。
+  4. **Duration 计数器实时更新**：`SessionCardView` 中用 `TimelineView(.periodic(from:by:1))` 替代静态 `durationFormatted`，活跃 session 的时长每秒刷新一次。
+
+- **以后如何避免：**
+  - 依赖 hook 推送做唯一 UI 更新来源是脆弱的，**必须搭配周期性轮询作为兜底**。
+  - 新增 hook 事件时，同步在 `HookInstaller`（注册）、`EventServer`（路由）、`ClaudeCodeAdapter`（处理）三处更新，缺一不可。注意：新增 hook 后用户需重新点击「Install Hooks」才能生效。
+
+- **Git Commit ID:** 387981a, 46637ba
+
 ## [2026-03-04] 点击设置按钮无反应（根本原因修复）
 
 - **遇到了什么问题：**
@@ -70,6 +88,29 @@
   在 SwiftUI App 生命周期中，**不要依赖 `NSApp.delegate as? MyAppDelegate`**，这个转型在 SwiftUI 生命周期下不可靠。需要从 AppKit 层调用功能时，应该通过闭包注入或 NotificationCenter 而非尝试反向查找 delegate。
 
 - **Git Commit ID:** de3e3d2
+
+## [2026-03-04] Event 显示空白 / Title 变高 / PIN 体验差 / 暗黑模式图标 / App 图标
+
+- **遇到了什么问题：**
+  1. 详情页 RECENT EVENTS 中 `SessionStart`/`Stop`/`Notification` 等生命周期事件只显示图标，没有文字。
+  2. 进入详情页后 title 区域变高（NavigationStack 导航栏与自定义 Back 按钮叠加）。
+  3. PIN 切换时有"新建窗口"感：`FloatingPanelController.show()` 每次重建 `NSPanel`。
+  4. 状态栏图标在暗黑模式下显示异常（未设置 `isTemplate`）。
+  5. 应用没有 App 图标。
+
+- **如何解决的：**
+  1. `ClaudeCodeAdapter.describeAction()` 新增对生命周期事件的文字描述；`AgentEvent.toolIcon` 按 `eventType` 返回对应图标。
+  2. 去掉 `SessionDetailView` 中的 `.navigationTitle()`，改用 `.navigationBarBackButtonHidden(true)` + 自定义 Back 按钮行。
+  3. `FloatingPanelController` 新增 `hide()` 方法（`orderOut`，不销毁），`show()` 复用已有 panel；`PinStateManager` 取消 pin 时调 `hide()` 而非 `close()`，重新 pin 时 panel 瞬间复现，无重建开销。
+  4. 对所有 SF Symbol 图片显式设置 `isTemplate = true`；idle 状态清除 `contentTintColor`。
+  5. 用 Python/Pillow 生成深色调雷达塔主题图标，`iconutil` 打包为 `.icns`，写入 `Info.plist`。
+
+- **以后如何避免：**
+  - macOS `NavigationStack` 在 panel/popover 中不显示标准返回按钮，**必须手动添加**。
+  - NSPanel 应预创建并复用，切换显示/隐藏用 `orderFrontRegardless`/`orderOut`，避免反复重建导致"新窗口"感。
+  - SF Symbol 用于状态栏时**必须设置 `isTemplate = true`**，否则暗黑模式下颜色不自适应。
+
+- **Git Commit ID:** 382435b
 
 ## [2026-03-03] 点击设置按钮无反应
 
