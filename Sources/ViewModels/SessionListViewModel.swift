@@ -12,7 +12,7 @@ final class SessionListViewModel {
 
     private let sessionStore: SessionStore
     private let dailyUsageStore: DailyUsageStore
-    private var observer: Any?
+    @ObservationIgnored nonisolated(unsafe) private var observer: Any?
 
     init(sessionStore: SessionStore, dailyUsageStore: DailyUsageStore) {
         self.sessionStore = sessionStore

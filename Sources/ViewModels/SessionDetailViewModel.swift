@@ -14,7 +14,7 @@ final class SessionDetailViewModel {
 
     private let sessionStore: SessionStore
     private let eventStore: EventStore
-    private var observer: Any?
+    @ObservationIgnored nonisolated(unsafe) private var observer: Any?
 
     init(session: AgentSession, sessionStore: SessionStore, eventStore: EventStore) {
         self.session = session
@@ -24,10 +24,11 @@ final class SessionDetailViewModel {
         observer = NotificationCenter.default.addObserver(
             forName: .sessionDidUpdate, object: nil, queue: .main
         ) { [weak self] notification in
-            let updatedId = notification.userInfo?["sessionId"] as? String
-            guard updatedId == self?.session.id else { return }
-            Task { @MainActor [weak self] in
-                self?.reload()
+            Task { @MainActor in
+                guard let self else { return }
+                let updatedId = notification.userInfo?["sessionId"] as? String
+                guard updatedId == self.session.id else { return }
+                self.reload()
             }
         }
     }

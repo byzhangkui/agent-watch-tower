@@ -74,16 +74,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return NSHostingView(rootView: rootView)
         }
 
-        let popoverRootView = PanelRootView(
-            viewModel: sessionListVM,
-            pinStateManager: PinStateManager(
-                popoverManager: PopoverManager(contentView: EmptyView()),
-                floatingPanel: FloatingPanelController(contentViewProvider: { NSView() })
-            ),
-            sessionStore: sessionStore,
-            eventStore: eventStore
-        )
-
         // Create managers - need to be created in the right order
         floatingPanelController = FloatingPanelController(contentViewProvider: contentViewProvider)
 
@@ -146,6 +136,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    @MainActor
     private func updateStatusBarIcon() {
         let activeCount = sessionListVM.activeCount
         let hasError = sessionListVM.hasError
