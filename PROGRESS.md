@@ -69,7 +69,7 @@
 - **以后如何避免：**
   在 SwiftUI App 生命周期中，**不要依赖 `NSApp.delegate as? MyAppDelegate`**，这个转型在 SwiftUI 生命周期下不可靠。需要从 AppKit 层调用功能时，应该通过闭包注入或 NotificationCenter 而非尝试反向查找 delegate。
 
-- **Git Commit ID:** (待填写)
+- **Git Commit ID:** de3e3d2
 
 ## [2026-03-03] 点击设置按钮无反应
 
