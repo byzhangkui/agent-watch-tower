@@ -46,7 +46,9 @@ struct PanelRootView: View {
 
     private func openSettings() {
         #if canImport(AppKit)
-        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        if let appDelegate = NSApp.delegate as? AppDelegate {
+            appDelegate.showSettings()
+        }
         #endif
     }
 }

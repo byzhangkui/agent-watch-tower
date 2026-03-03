@@ -24,6 +24,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusUpdateTimer: Timer?
     private var cleanupTimer: Timer?
 
+    // Settings Window
+    private var settingsWindow: NSWindow?
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Hide from Dock
         NSApp.setActivationPolicy(.accessory)
@@ -117,6 +120,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusUpdateTimer?.invalidate()
         cleanupTimer?.invalidate()
         eventServer?.stop()
+    }
+
+    // MARK: - Window Management
+
+    @MainActor
+    @objc func showSettings() {
+        if let window = settingsWindow {
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 480, height: 350),
+            styleMask: [.titled, .closable, .miniaturizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Settings"
+        window.isReleasedWhenClosed = false
+        window.center()
+        
+        let hostingView = NSHostingView(rootView: SettingsView())
+        window.contentView = hostingView
+
+        self.settingsWindow = window
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     // MARK: - Periodic Tasks
