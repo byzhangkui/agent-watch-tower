@@ -126,7 +126,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @MainActor
     @objc func showSettings() {
-        if let window = settingsWindow {
+        if let window = settingsWindow, window.isVisible {
             window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             return
