@@ -18,13 +18,14 @@ struct SessionCardView: View {
 
                 Spacer()
 
-                HStack(spacing: 2) {
-                    Image(systemName: "clock")
-                        .font(.caption2)
-                    Text(session.durationFormatted)
-                        .font(.caption)
+                // Live duration for active sessions, static for completed
+                if session.isActive {
+                    TimelineView(.periodic(from: .now, by: 1.0)) { context in
+                        durationLabel(now: context.date)
+                    }
+                } else {
+                    durationLabel(now: Date())
                 }
-                .foregroundStyle(.secondary)
             }
 
             // Row 2: Project directory
@@ -71,6 +72,22 @@ struct SessionCardView: View {
     }
 
     // MARK: - Private
+
+    private func durationLabel(now: Date) -> some View {
+        let end = session.endDate ?? now
+        let seconds = end.timeIntervalSince(session.startDate)
+        let minutes = Int(seconds / 60)
+        let text = minutes < 60
+            ? "\(minutes)m"
+            : "\(minutes / 60)h \(minutes % 60)m"
+        return HStack(spacing: 2) {
+            Image(systemName: "clock")
+                .font(.caption2)
+            Text(text)
+                .font(.caption)
+        }
+        .foregroundStyle(.secondary)
+    }
 
     private var agentColor: Color {
         Color(hex: session.agentType.brandColor)
