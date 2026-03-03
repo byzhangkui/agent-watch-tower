@@ -1,5 +1,21 @@
 # Progress Record
 
+## [2026-03-04] Session 自动消失 / 列表顺序不稳定
+
+- **遇到了什么问题：**
+  1. 用户发现 Session 列表中的项目会自动消失。
+  2. Session 列表的顺序在确定后会不断变化（新事件到来后某个 session 会跳到顶部）。
+
+- **如何解决的：**
+  1. **Session 消失**：`SessionListViewModel.reload()` 中原来写的是 `sessions = (try? sessionStore.todaySessions()) ?? []`，当数据库读取失败时会将列表置空。改为 `if let fetched = try? sessionStore.todaySessions() { sessions = fetched }`，DB 出错时保留已有数据，避免列表闪烁/清空。
+  2. **顺序不稳定**：`SessionStore.todaySessions()` 原来按 `updated_at DESC` 排序，而每次 hook 事件到来都会更新 `updated_at`，导致列表顺序随事件流不断变化。改为按 `started_at DESC` 排序，Session 创建后顺序固定不变。
+
+- **以后如何避免：**
+  - 列表数据源发生错误时，**应保留已有数据而非替换为空**，避免 UI 闪烁。
+  - 列表排序字段应选择**创建时不再变化的字段**（如 `started_at`），而不是频繁更新的字段（如 `updated_at`），否则列表顺序会随业务事件不断跳动。
+
+- **Git Commit ID:** 9a1f4df
+
 ## [2026-03-03] Swift 并发及 Actor 隔离编译错误修复
 
 - **遇到了什么问题：**
