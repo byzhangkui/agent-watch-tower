@@ -1063,7 +1063,206 @@ App Launch
 
 ---
 
-## 14. 测试策略
+## 14. 数据采集方案对比：Hooks vs SDK vs Transcript
+
+### 14.1 方案对比
+
+| 维度 | HTTP Hooks（采用） | Claude Agent SDK | Transcript 解析（增强） |
+|------|-------------------|-----------------|----------------------|
+| 数据来源 | Claude Code 主动推送 | SDK 子进程 stream events | `~/.claude/projects/.../transcript.jsonl` |
+| 监控对象 | 用户已启动的任意会话 | 仅限由 SDK 启动的会话 | 有 transcript_path 的会话 |
+| 对用户工作流影响 | **零** — 用户照常在终端使用 | **大** — 必须通过 Watch Tower 启动 | **零** — 只读文件 |
+| 实时性 | 工具调用前后（离散事件） | 逐 token 流式推送 | 非实时（文件写入后读取） |
+| 可获取数据 | tool_name, tool_input, tool_response, session_id, cwd | 全部 stream events (thinking, text, tool) | stop_reason, token usage, 完整对话历史 |
+| Thinking 状态 | 间接推断（PreToolUse 间隔） | 直接收到 stream event | 无法实时获取 |
+| stop_reason | **无** | 有（end_turn, max_tokens, tool_use） | **有** |
+| Token 用量 | **无**（Hook payload 不含） | 有（message_delta.usage） | **有**（每条消息的 usage） |
+| 编程语言 | 任意（HTTP 接收端） | Python / TypeScript（无官方 Swift SDK） | Swift（直接读文件） |
+
+### 14.2 结论：Hooks 为主 + Transcript 解析增强
+
+```
+┌─────────────────────────────────────────────────────┐
+│              数据采集架构（最终方案）                    │
+│                                                     │
+│   ┌──────────────────────────────────────────┐      │
+│   │         HTTP Hooks（主数据源）             │      │
+│   │   实时事件：PreToolUse / PostToolUse      │      │
+│   │   会话生命周期：SessionStart / Stop        │      │
+│   │   通知：Notification                      │      │
+│   │   子 Agent：SubagentStart / SubagentStop  │      │
+│   └─────────────────┬────────────────────────┘      │
+│                     │                               │
+│                     ▼                               │
+│   ┌──────────────────────────────────────────┐      │
+│   │     Transcript 解析（补充数据源）          │      │
+│   │   触发时机：收到 Stop 事件时               │      │
+│   │   ✅ stop_reason → 精确状态判断           │      │
+│   │   ✅ usage → 精确 token 用量             │      │
+│   │   ✅ 完整工具调用历史                     │      │
+│   └──────────────────────────────────────────┘      │
+│                                                     │
+│   Claude Agent SDK → 暂不引入                       │
+│     原因：                                          │
+│     1. 要求由 SDK 启动会话，改变用户工作流（核心矛盾）  │
+│     2. 无官方 Swift SDK，需引入 Node.js/Python 边车   │
+│     3. 未来 Phase 3 可考虑 SDK 模式提供               │
+│        "Watch Tower 内置终端" 功能                   │
+└─────────────────────────────────────────────────────┘
+```
+
+**不引入 SDK 的原因**：
+
+1. **核心矛盾** — SDK 要求由它来启动 Claude Code 子进程，用户无法在自己的终端中交互
+2. **语言不匹配** — SDK 仅支持 Python/TypeScript，而本项目是 Swift 原生应用，需要引入额外的 Node.js/Python sidecar 进程
+3. **复杂度过高** — 为了获取 thinking stream 而引入跨语言进程通信，收益不足以抵消架构成本
+4. **Transcript 可补充** — SDK 的核心优势（stop_reason、token usage）可通过解析 transcript JSONL 文件获得
+
+### 14.3 Transcript 解析器
+
+Claude Code 的 Hook stdin 包含 `transcript_path` 字段，指向完整的会话 JSONL 文件。在收到 `Stop` 事件时解析此文件，可补充 Hook 事件缺失的数据：
+
+```swift
+// TranscriptParser.swift
+
+/// 解析 Claude Code 的 transcript.jsonl 文件，
+/// 提取 stop_reason、token usage 等 Hook 事件中缺失的数据
+struct TranscriptParser {
+
+    struct TranscriptEntry: Codable {
+        let type: String                 // "human", "assistant"
+        let message: MessageContent?
+    }
+
+    struct MessageContent: Codable {
+        let role: String?
+        let content: [ContentBlock]?
+        let stopReason: String?          // "end_turn", "max_tokens", "tool_use"
+        let usage: UsageInfo?
+
+        enum CodingKeys: String, CodingKey {
+            case role, content
+            case stopReason = "stop_reason"
+            case usage
+        }
+    }
+
+    struct UsageInfo: Codable {
+        let inputTokens: Int
+        let outputTokens: Int
+
+        enum CodingKeys: String, CodingKey {
+            case inputTokens = "input_tokens"
+            case outputTokens = "output_tokens"
+        }
+    }
+
+    struct ContentBlock: Codable {
+        let type: String                 // "text", "tool_use", "tool_result"
+        let name: String?               // tool name (for tool_use blocks)
+    }
+
+    struct ParseResult {
+        let lastStopReason: String?
+        let totalUsage: UsageInfo
+        let toolCallCount: Int
+    }
+
+    /// 解析 transcript JSONL 文件
+    /// 只读取最后 N 行以保证性能（transcript 可能很大）
+    func parse(_ path: String, tailLines: Int = 50) throws -> ParseResult {
+        let url = URL(fileURLWithPath: path)
+        let data = try Data(contentsOf: url)
+        let lines = String(data: data, encoding: .utf8)?
+            .split(separator: "\n")
+            .suffix(tailLines) ?? []
+
+        var lastStopReason: String?
+        var totalInput = 0
+        var totalOutput = 0
+        var toolCalls = 0
+
+        for line in lines {
+            guard let lineData = line.data(using: .utf8),
+                  let entry = try? JSONDecoder().decode(
+                      TranscriptEntry.self, from: lineData
+                  ) else { continue }
+
+            if let msg = entry.message {
+                if let usage = msg.usage {
+                    totalInput += usage.inputTokens
+                    totalOutput += usage.outputTokens
+                }
+                if entry.type == "assistant", let reason = msg.stopReason {
+                    lastStopReason = reason
+                }
+                toolCalls += msg.content?
+                    .filter { $0.type == "tool_use" }.count ?? 0
+            }
+        }
+
+        return ParseResult(
+            lastStopReason: lastStopReason,
+            totalUsage: UsageInfo(
+                inputTokens: totalInput,
+                outputTokens: totalOutput
+            ),
+            toolCallCount: toolCalls
+        )
+    }
+}
+```
+
+### 14.4 EventProcessor 中集成 Transcript 解析
+
+```swift
+// EventProcessor 中 Stop 事件的增强处理
+func process(_ payload: HookPayload) async {
+    let adapter = adapters["claude-code"]!
+
+    // 1. 常规 Hook 事件处理（同 §8）
+    let existing = try? await sessionStore.find(id: payload.sessionId)
+    let session = adapter.updateSession(from: payload, existing: existing)
+
+    // 2. Stop 事件：解析 transcript 补充数据
+    if payload.hookEventName == "Stop",
+       let transcriptPath = payload.transcriptPath {
+        let parser = TranscriptParser()
+        if let result = try? parser.parse(transcriptPath) {
+            // 精确的完成状态（替代简单的 .completed）
+            session.status = switch result.lastStopReason {
+            case "end_turn":    .completed
+            case "max_tokens":  .error       // token 超限视为异常
+            default:            .completed
+            }
+
+            // 精确的 token 用量
+            session.tokensInput = result.totalUsage.inputTokens
+            session.tokensOutput = result.totalUsage.outputTokens
+        }
+    }
+
+    try? await sessionStore.upsert(session)
+    // ... 后续事件存储和 UI 通知同 §8
+}
+```
+
+### 14.5 对用户工作流的影响
+
+**零影响**。具体分析：
+
+| 场景 | 行为 | 对用户的影响 |
+|------|------|-------------|
+| 正常使用 | Watch Tower 通过 HTTP Hooks 静默接收事件 | 无感 |
+| Watch Tower 未运行 | HTTP 请求失败，Claude Code 5s 超时后跳过 | 无感（可能有微小延迟） |
+| Watch Tower 崩溃 | 同上，Hook 失败不影响 Claude Code | 无感 |
+| 安装 Hooks | 追加到 `~/.claude/settings.json`，不覆盖已有配置 | 一次性配置 |
+| 卸载 Hooks | 只移除 Watch Tower 的 hook 条目 | 一键还原 |
+| Transcript 读取 | 只在 Stop 事件时只读访问，不修改文件 | 无感 |
+
+---
+
+## 15. 测试策略
 
 | 层级 | 测试内容 | 方法 |
 |------|---------|------|
