@@ -126,9 +126,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @MainActor
     @objc func showSettings() {
+        // Close popover first to avoid transient-behavior conflicts
+        if popoverManager.isShown {
+            popoverManager.close()
+        }
+
         if let window = settingsWindow, window.isVisible {
-            window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
+            window.makeKeyAndOrderFront(nil)
             return
         }
 
@@ -141,13 +146,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.title = "Settings"
         window.isReleasedWhenClosed = false
         window.center()
-        
+
         let hostingView = NSHostingView(rootView: SettingsView())
         window.contentView = hostingView
 
         self.settingsWindow = window
-        window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+        window.makeKeyAndOrderFront(nil)
     }
 
     // MARK: - Periodic Tasks
