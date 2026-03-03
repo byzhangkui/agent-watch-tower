@@ -13,6 +13,7 @@ final class SessionListViewModel {
     private let sessionStore: SessionStore
     private let dailyUsageStore: DailyUsageStore
     @ObservationIgnored nonisolated(unsafe) private var observer: Any?
+    @ObservationIgnored nonisolated(unsafe) private var refreshTimer: Timer?
 
     init(sessionStore: SessionStore, dailyUsageStore: DailyUsageStore) {
         self.sessionStore = sessionStore
@@ -25,12 +26,20 @@ final class SessionListViewModel {
                 self?.reload()
             }
         }
+
+        // Fallback: reload every 2 seconds so UI stays in sync even if a hook notification is missed
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.reload()
+            }
+        }
     }
 
     deinit {
         if let observer {
             NotificationCenter.default.removeObserver(observer)
         }
+        refreshTimer?.invalidate()
     }
 
     func reload() {

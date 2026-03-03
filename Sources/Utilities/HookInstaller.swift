@@ -2,6 +2,7 @@ import Foundation
 
 struct HookInstaller {
     static let hookRoutes: [(event: String, path: String)] = [
+        ("UserPromptSubmit", "/events/user-prompt-submit"),  // Fires immediately on user input
         ("PreToolUse",    "/events/pre-tool-use"),
         ("PostToolUse",   "/events/post-tool-use"),
         ("Notification",  "/events/notification"),

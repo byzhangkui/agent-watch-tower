@@ -23,6 +23,7 @@ final class EventServer {
 
         // Per-event-type endpoints for structured hook configuration
         let eventPaths = [
+            "user-prompt-submit",
             "pre-tool-use", "post-tool-use", "notification",
             "session-start", "stop",
             "subagent-start", "subagent-stop"

@@ -7,6 +7,8 @@ struct ClaudeCodeAdapter: AgentAdapter {
         // Non-tool lifecycle events
         if payload.toolName == nil {
             switch payload.hookEventName {
+            case "UserPromptSubmit":
+                return "User Input"
             case "SessionStart":
                 let src = payload.source ?? "startup"
                 return src == "resume" ? "Session Resumed" : "Session Started"
@@ -66,9 +68,7 @@ struct ClaudeCodeAdapter: AgentAdapter {
             eventType = .toolCall
         case "PostToolUse":
             eventType = .toolResult
-        case "Stop":
-            eventType = .message
-        case "Notification":
+        case "Stop", "Notification", "SessionStart", "UserPromptSubmit":
             eventType = .message
         case "SubagentStart":
             eventType = .subagentStart
@@ -108,6 +108,7 @@ struct ClaudeCodeAdapter: AgentAdapter {
 
             case "PostToolUse":
                 session.status = .running
+                session.currentAction = nil  // Clear after tool finishes; next PreToolUse will set it
                 session.updatedAt = now
                 // Check if it's a TodoWrite to update progress
                 if payload.toolName == "TodoWrite" {
@@ -128,6 +129,11 @@ struct ClaudeCodeAdapter: AgentAdapter {
                 session.updatedAt = now
 
             case "SubagentStop":
+                session.updatedAt = now
+
+            case "UserPromptSubmit":
+                session.status = .running
+                session.currentAction = nil
                 session.updatedAt = now
 
             case "SessionStart":
