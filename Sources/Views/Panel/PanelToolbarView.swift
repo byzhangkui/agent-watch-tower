@@ -15,6 +15,14 @@ struct PanelToolbarView: View {
 
             Spacer()
 
+            Button(action: onSettings) {
+                Image(systemName: "gearshape.fill")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .help("Settings")
+
             Button(action: onPin) {
                 Image(systemName: isPinned ? "pin.slash.fill" : "pin.fill")
                     .font(.body)
