@@ -52,15 +52,25 @@ extension AgentEvent {
 
     var toolIcon: String {
         switch toolName {
-        case "Edit":   return "pencil"
-        case "Write":  return "doc.badge.plus"
-        case "Read":   return "doc.text"
-        case "Bash":   return "terminal"
-        case "Grep":   return "magnifyingglass"
-        case "Glob":   return "folder.badge.magnifyingglass"
-        case "Agent":  return "person.2"
+        case "Edit":      return "pencil"
+        case "Write":     return "doc.badge.plus"
+        case "Read":      return "doc.text"
+        case "Bash":      return "terminal"
+        case "Grep":      return "magnifyingglass"
+        case "Glob":      return "folder.badge.magnifyingglass"
+        case "Agent":     return "person.2"
         case "TodoWrite": return "checklist"
-        default:       return "gear"
+        case "WebSearch": return "safari"
+        case "WebFetch":  return "arrow.down.circle"
+        case nil:
+            // Lifecycle events (no tool)
+            switch eventType {
+            case .message:      return "text.bubble"
+            case .subagentStart: return "person.2.badge.plus"
+            case .subagentStop:  return "person.2.badge.minus"
+            default:            return "circle.dotted"
+            }
+        default:          return "gear"
         }
     }
 }

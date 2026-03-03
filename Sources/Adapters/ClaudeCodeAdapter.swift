@@ -4,7 +4,26 @@ struct ClaudeCodeAdapter: AgentAdapter {
     let agentType: AgentType = .claudeCode
 
     func describeAction(from payload: HookPayload) -> String? {
-        guard let toolName = payload.toolName else { return nil }
+        // Non-tool lifecycle events
+        if payload.toolName == nil {
+            switch payload.hookEventName {
+            case "SessionStart":
+                let src = payload.source ?? "startup"
+                return src == "resume" ? "Session Resumed" : "Session Started"
+            case "Stop":
+                return "Session Ended"
+            case "Notification":
+                return "Notification"
+            case "SubagentStart":
+                return "Agent Started: \(payload.agentName ?? "subagent")"
+            case "SubagentStop":
+                return "Agent Stopped: \(payload.agentName ?? "subagent")"
+            default:
+                return payload.hookEventName
+            }
+        }
+
+        let toolName = payload.toolName!
         let input = payload.toolInput
 
         switch toolName {

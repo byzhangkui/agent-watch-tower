@@ -20,14 +20,14 @@ final class PinStateManager {
         isPinned.toggle()
 
         if isPinned {
-            // Popover → Floating Panel
+            // Popover → Floating Panel: capture popover position, close it, show panel there
             let frame = popoverManager.currentFrame ?? lastPinnedFrame
             popoverManager.close()
             floatingPanel.show(at: frame)
         } else {
-            // Floating Panel → Popover
+            // Floating Panel → Popover: hide (don't destroy) so panel can be reused
             lastPinnedFrame = floatingPanel.currentFrame
-            floatingPanel.close()
+            floatingPanel.hide()
             // Popover will be shown on next status bar click
         }
     }
@@ -36,7 +36,7 @@ final class PinStateManager {
         if isPinned {
             // In Pin mode, clicking menu bar toggles the floating panel
             if floatingPanel.isVisible {
-                floatingPanel.close()
+                floatingPanel.hide()
             } else {
                 floatingPanel.show(at: lastPinnedFrame)
             }

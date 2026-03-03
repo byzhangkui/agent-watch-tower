@@ -52,7 +52,7 @@ struct SessionDetailView: View {
                 tokenSummary
             }
         }
-        .navigationTitle(viewModel.session.projectName)
+        .navigationBarBackButtonHidden(true)
         .onAppear {
             viewModel.reload()
         }

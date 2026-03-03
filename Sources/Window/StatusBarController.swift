@@ -21,10 +21,12 @@ final class StatusBarController: NSObject {
         super.init()
 
         if let button = statusItem.button {
-            button.image = NSImage(
+            let image = NSImage(
                 systemSymbolName: "antenna.radiowaves.left.and.right",
                 accessibilityDescription: Constants.appName
             )
+            image?.isTemplate = true
+            button.image = image
             button.imagePosition = .imageLeading
             button.target = self
             button.action = #selector(statusBarButtonClicked)
@@ -41,28 +43,34 @@ final class StatusBarController: NSObject {
         switch state {
         case .idle:
             stopAnimation()
-            button.image = NSImage(
+            let idleImage = NSImage(
                 systemSymbolName: "antenna.radiowaves.left.and.right",
                 accessibilityDescription: "Idle"
             )
+            idleImage?.isTemplate = true
+            button.image = idleImage
             button.title = ""
-            button.contentTintColor = .secondaryLabelColor
+            button.contentTintColor = nil   // let system handle adaptive rendering
 
         case .running(let count):
             startPulseAnimation()
-            button.image = NSImage(
+            let runningImage = NSImage(
                 systemSymbolName: "antenna.radiowaves.left.and.right",
                 accessibilityDescription: "Running"
             )
+            runningImage?.isTemplate = true
+            button.image = runningImage
             button.title = count > 0 ? " \(count)" : ""
             button.contentTintColor = .controlAccentColor
 
         case .error:
             stopAnimation()
-            button.image = NSImage(
+            let errorImage = NSImage(
                 systemSymbolName: "antenna.radiowaves.left.and.right.slash",
                 accessibilityDescription: "Error"
             )
+            errorImage?.isTemplate = true
+            button.image = errorImage
             button.title = ""
             button.contentTintColor = .systemRed
         }

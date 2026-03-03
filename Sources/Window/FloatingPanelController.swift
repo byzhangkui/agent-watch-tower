@@ -14,8 +14,16 @@ final class FloatingPanelController {
     var isVisible: Bool { panel?.isVisible ?? false }
 
     func show(at frame: NSRect? = nil) {
-        let targetFrame = frame ?? defaultFrame()
+        if let panel = panel {
+            // Reuse existing panel — just reposition and bring to front
+            let targetFrame = frame ?? panel.frame
+            panel.setFrame(targetFrame, display: false, animate: false)
+            panel.orderFrontRegardless()
+            return
+        }
 
+        // First time: create the panel
+        let targetFrame = frame ?? defaultFrame()
         let panel = NSPanel(
             contentRect: targetFrame,
             styleMask: [.titled, .closable, .resizable, .nonactivatingPanel],
@@ -30,17 +38,20 @@ final class FloatingPanelController {
         panel.isMovableByWindowBackground = true
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
 
-        // Size constraints
         panel.minSize = NSSize(width: Constants.panelMinWidth, height: Constants.panelMinHeight)
         panel.maxSize = NSSize(width: Constants.panelMaxWidth, height: Constants.panelMaxHeight)
 
-        // Embed SwiftUI content
         panel.contentView = contentViewProvider()
-
         panel.orderFrontRegardless()
         self.panel = panel
     }
 
+    /// Hide the panel without destroying it (preserves state for quick reshow).
+    func hide() {
+        panel?.orderOut(nil)
+    }
+
+    /// Destroy the panel (call on app termination or full teardown).
     func close() {
         panel?.close()
         panel = nil
