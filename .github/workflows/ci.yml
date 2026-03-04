@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer
+
+      - name: Show toolchain
+        run: |
+          swift --version
+          xcodebuild -version
+
+      - name: Resolve dependencies
+        run: swift package resolve
+
+      - name: Build (Debug)
+        run: swift build
+
+      - name: Build (Release)
+        run: swift build -c release
+
+      - name: Run tests
+        run: swift test
+
+      - name: Assemble .app bundle
+        run: make bundle
+
+      - name: Verify bundle structure
+        run: |
+          test -d .build/AgentWatchTower.app/Contents/MacOS
+          test -f .build/AgentWatchTower.app/Contents/MacOS/AgentWatchTower
+          test -f .build/AgentWatchTower.app/Contents/Info.plist
+          echo "Bundle structure OK"

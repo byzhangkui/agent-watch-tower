@@ -1,0 +1,17 @@
+# Swift build artifacts
+.build/
+
+# Swift Package Manager
+Package.resolved
+
+# Temporary / test scripts
+install_hooks_script.swift
+run_manual_settings.swift
+test_delegate.swift
+test_home.swift
+test_settings.swift
+test_window_open.swift
+update_app.swift
+
+# macOS
+.DS_Store

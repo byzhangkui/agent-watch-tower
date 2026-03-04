@@ -1,0 +1,88 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: Build & Package
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Stamp version into Info.plist
+        run: |
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${{ steps.version.outputs.tag }}" Resources/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" Resources/Info.plist
+
+      - name: Resolve dependencies
+        run: swift package resolve
+
+      - name: Build release
+        run: swift build -c release
+
+      - name: Assemble .app bundle
+        run: make bundle
+
+      - name: Ad-hoc code sign
+        run: |
+          codesign --force --deep --sign - \
+            --entitlements Resources/AgentWatchTower.entitlements \
+            .build/AgentWatchTower.app
+
+      - name: Verify code sign
+        run: codesign --verify --deep --strict .build/AgentWatchTower.app
+
+      - name: Create DMG
+        run: |
+          DMG_NAME="AgentWatchTower-${{ steps.version.outputs.tag }}-universal.dmg"
+          STAGING="$(mktemp -d)"
+
+          cp -R .build/AgentWatchTower.app "$STAGING/"
+          ln -s /Applications "$STAGING/Applications"
+
+          hdiutil create -volname "Agent Watch Tower" \
+            -srcfolder "$STAGING" \
+            -ov -format UDZO \
+            ".build/$DMG_NAME"
+
+          echo "dmg_name=$DMG_NAME" >> "$GITHUB_OUTPUT"
+        id: dmg
+
+      - name: Create ZIP
+        run: |
+          ZIP_NAME="AgentWatchTower-${{ steps.version.outputs.tag }}-universal.zip"
+          cd .build
+          ditto -c -k --sequesterRsrc --keepParent AgentWatchTower.app "$ZIP_NAME"
+          echo "zip_name=$ZIP_NAME" >> "$GITHUB_OUTPUT"
+        id: zip
+
+      - name: Generate SHA256 checksums
+        run: |
+          cd .build
+          shasum -a 256 "${{ steps.dmg.outputs.dmg_name }}" > checksums.txt
+          shasum -a 256 "${{ steps.zip.outputs.zip_name }}" >> checksums.txt
+          cat checksums.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Agent Watch Tower v${{ steps.version.outputs.tag }}
+          generate_release_notes: true
+          files: |
+            .build/${{ steps.dmg.outputs.dmg_name }}
+            .build/${{ steps.zip.outputs.zip_name }}
+            .build/checksums.txt
