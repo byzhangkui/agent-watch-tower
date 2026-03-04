@@ -63,6 +63,7 @@ struct SessionCardView: View {
                         .buttonStyle(.plain)
                         .padding(.leading, 4)
                         .opacity(isHovered ? 1.0 : 0.0)
+                        .help("Remove Session")
                     }
                 }
 
