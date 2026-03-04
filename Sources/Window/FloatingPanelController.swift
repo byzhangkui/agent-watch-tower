@@ -70,13 +70,27 @@ final class FloatingPanelController {
         panel.becomesKeyOnlyIfNeeded = true
         panel.isMovableByWindowBackground = true
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-        panel.appearance = NSAppearance(named: .darkAqua)
-        panel.backgroundColor = NSColor(red: 30/255.0, green: 30/255.0, blue: 32/255.0, alpha: 0.98)
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+
+        let visualEffect = NSVisualEffectView()
+        visualEffect.material = .popover
+        visualEffect.blendingMode = .behindWindow
+        visualEffect.state = .active
+        
+        let containerView = NSView()
+        visualEffect.frame = containerView.bounds
+        visualEffect.autoresizingMask = [.width, .height]
+        containerView.addSubview(visualEffect)
+        
+        contentView.frame = containerView.bounds
+        contentView.autoresizingMask = [.width, .height]
+        containerView.addSubview(contentView)
 
         panel.minSize = NSSize(width: Constants.panelMinWidth, height: Constants.panelMinHeight)
         panel.maxSize = NSSize(width: Constants.panelMaxWidth, height: Constants.panelMaxHeight)
 
-        panel.contentView = contentView
+        panel.contentView = containerView
         panel.orderFrontRegardless()
         self.panel = panel
         
