@@ -157,9 +157,9 @@ struct SessionCardView: View {
         let isDark = colorScheme == .dark
         switch session.agentType {
         case .claudeCode:
-            return isDark ? Color(hex: "#E49F7D") : Color(hex: "#C66A45") // Coral/Apricot
+            return isDark ? Color(hex: "#F0A785") : Color(hex: "#C66A45") // Coral/Apricot
         case .gemini:
-            return isDark ? Color(hex: "#A8C7FA") : Color(hex: "#2563EB") // Cyan/Light Blue
+            return isDark ? Color(hex: "#8EEDEB") : Color(hex: "#2563EB") // Cyan/Light Blue
         }
     }
 }
