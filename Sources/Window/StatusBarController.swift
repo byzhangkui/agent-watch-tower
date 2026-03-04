@@ -33,7 +33,7 @@ final class StatusBarController: NSObject {
     }
     
     private func getMenuIcon(isError: Bool = false) -> NSImage? {
-        let name = "menubar-icon"
+        let name = "menubar-iconTemplate"
         var image = NSImage(named: name)
         
         if image == nil {
@@ -48,9 +48,10 @@ final class StatusBarController: NSObject {
         }
         
         if let image = image {
-            image.isTemplate = true
-            image.size = NSSize(width: 18, height: 18)
-            return image
+            let copy = image.copy() as! NSImage
+            copy.isTemplate = true
+            copy.size = NSSize(width: 18, height: 18)
+            return copy
         }
         
         let fallback = NSImage(
