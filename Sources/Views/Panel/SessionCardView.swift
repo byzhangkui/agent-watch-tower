@@ -5,6 +5,10 @@ import SwiftUI
 struct SessionCardView: View {
     let session: AgentSession
 
+    @State private var alertPulse = false
+
+    private var isWaiting: Bool { session.status == .waitingForUser }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             // Row 1: Status indicator + agent type + duration
@@ -17,6 +21,24 @@ struct SessionCardView: View {
                     .foregroundStyle(agentColor)
 
                 Spacer()
+
+                // Waiting-for-user badge
+                if isWaiting {
+                    HStack(spacing: 3) {
+                        Image(systemName: "exclamationmark.circle.fill")
+                            .font(.caption2)
+                        Text("Needs Input")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                    }
+                    .foregroundStyle(.orange)
+                    .opacity(alertPulse ? 1.0 : 0.5)
+                    .animation(
+                        .easeInOut(duration: 1.0).repeatForever(autoreverses: true),
+                        value: alertPulse
+                    )
+                    .onAppear { alertPulse = true }
+                }
 
                 // Live duration for active sessions, static for completed
                 if session.isActive {
@@ -69,6 +91,15 @@ struct SessionCardView: View {
         .padding(Constants.contentPadding)
         .background(Color(nsColor: .controlBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: Constants.cardCornerRadius))
+        .overlay(
+            RoundedRectangle(cornerRadius: Constants.cardCornerRadius)
+                .stroke(Color.orange, lineWidth: isWaiting ? 1.5 : 0)
+                .opacity(isWaiting ? (alertPulse ? 0.8 : 0.3) : 0)
+                .animation(
+                    .easeInOut(duration: 1.0).repeatForever(autoreverses: true),
+                    value: alertPulse
+                )
+        )
     }
 
     // MARK: - Private

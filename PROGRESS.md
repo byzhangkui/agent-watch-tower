@@ -1,5 +1,20 @@
 # Progress Record
 
+## [2026-03-04] 用 Pin 替换为独立置顶窗口 + waitingForUser 状态提醒
+
+- **做了什么：**
+  1. **移除 Pin 机制**：删除 `PinStateManager.swift`，移除 `PanelToolbarView` 和 `PanelRootView` 中对 `isPinned` / `pinStateManager` 的依赖。
+  2. **新增"打开窗口"按钮**：在 `PanelToolbarView` 中将原来的 Pin 按钮替换为 `macwindow.badge.plus` 图标，点击后关闭 Popover 并打开独立置顶窗口。
+  3. **创建 `CompactSessionListView`**：独立窗口的内容视图，包含 DailySummary + SessionCard 列表，无 NavigationStack / NavigationLink，纯展示。
+  4. **重写 `FloatingPanelController`**：移除 `at frame:` 参数，新增 `toggle()` 方法，默认定位屏幕右上角，通过 UserDefaults 保存/恢复窗口位置。
+  5. **简化 `AppDelegate`**：移除 `pinStateManager`，Popover 的 `onOpenWindow` 回调 → 关闭 Popover + 显示浮动面板；状态栏点击 → `popoverManager.toggle()`。
+  6. **waitingForUser 状态提醒**：在 `SessionCardView` 中为 `waitingForUser` 状态添加橙色 "Needs Input" 徽章（带脉冲动画）和橙色边框高亮。
+
+- **改动文件：**
+  - 修改：`PanelToolbarView.swift`, `PanelRootView.swift`, `FloatingPanelController.swift`, `AppDelegate.swift`, `SessionCardView.swift`
+  - 新建：`CompactSessionListView.swift`
+  - 删除：`PinStateManager.swift`
+
 ## [2026-03-04] Session 自动消失 / 列表顺序不稳定
 
 - **遇到了什么问题：**

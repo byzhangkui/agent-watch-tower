@@ -4,9 +4,9 @@ import SwiftUI
 /// Root view for the panel, containing toolbar, daily summary, and session list.
 struct PanelRootView: View {
     let viewModel: SessionListViewModel
-    let pinStateManager: PinStateManager
     let sessionStore: SessionStore
     let eventStore: EventStore
+    let onOpenWindow: () -> Void
     let onShowSettings: () -> Void
 
     var body: some View {
@@ -14,8 +14,7 @@ struct PanelRootView: View {
             VStack(spacing: 0) {
                 // Toolbar
                 PanelToolbarView(
-                    isPinned: pinStateManager.isPinned,
-                    onPin: { pinStateManager.togglePin() },
+                    onOpenWindow: onOpenWindow,
                     onSettings: onShowSettings
                 )
 
