@@ -8,9 +8,11 @@ final class FloatingPanelController {
     private var panel: NSPanel?
     private let contentViewProvider: () -> NSView
 
-    // UserDefaults keys for saving/restoring window position
+    // UserDefaults keys for saving/restoring window position and size
     private static let positionXKey = "FloatingPanel.positionX"
     private static let positionYKey = "FloatingPanel.positionY"
+    private static let sizeWidthKey = "FloatingPanel.sizeWidth"
+    private static let sizeHeightKey = "FloatingPanel.sizeHeight"
     private static let hasSavedPositionKey = "FloatingPanel.hasSavedPosition"
     private static let isVisibleKey = "FloatingPanel.isVisible"
 
@@ -47,11 +49,13 @@ final class FloatingPanelController {
         let contentView = contentViewProvider()
 
         let fittingSize = contentView.fittingSize
-        let width = max(fittingSize.width, Constants.panelDefaultWidth)
-        let height = max(fittingSize.height, Constants.panelMinHeight)
+        let defaultWidth = max(fittingSize.width, Constants.panelDefaultWidth)
+        let defaultHeight = max(fittingSize.height, Constants.panelMinHeight)
 
-        let origin = savedPosition() ?? defaultOrigin(for: NSSize(width: width, height: height))
-        let frame = NSRect(origin: origin, size: NSSize(width: width, height: height))
+        let savedFrame = savedFrame()
+        let size = savedFrame?.size ?? NSSize(width: defaultWidth, height: defaultHeight)
+        let origin = savedFrame?.origin ?? defaultOrigin(for: size)
+        let frame = NSRect(origin: origin, size: size)
 
         let panel = NSPanel(
             contentRect: frame,
@@ -96,16 +100,23 @@ final class FloatingPanelController {
         
         // Ensure the restored position is visible on the current screens, otherwise reset
         if !isFrameVisibleOnAnyScreen(panel.frame) {
-            panel.setFrameOrigin(defaultOrigin(for: panel.frame.size))
+            let defaultSize = NSSize(width: defaultWidth, height: defaultHeight)
+            panel.setFrameOrigin(defaultOrigin(for: defaultSize))
         }
 
         UserDefaults.standard.set(true, forKey: Self.isVisibleKey)
 
-        // Save position when the window moves
+        // Save position and size when the window moves or resizes
         NotificationCenter.default.addObserver(
             self,
-            selector: #selector(windowDidMove),
+            selector: #selector(windowDidMoveOrResize),
             name: NSWindow.didMoveNotification,
+            object: panel
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(windowDidMoveOrResize),
+            name: NSWindow.didResizeNotification,
             object: panel
         )
         
@@ -120,16 +131,17 @@ final class FloatingPanelController {
 
     /// Hide the panel without destroying it (preserves state for quick reshow).
     func hide() {
-        savePosition()
+        saveState()
         panel?.orderOut(nil)
         UserDefaults.standard.set(false, forKey: Self.isVisibleKey)
     }
 
     /// Destroy the panel (call on app termination or full teardown).
     func close() {
-        savePosition()
+        saveState()
         if let panel {
             NotificationCenter.default.removeObserver(self, name: NSWindow.didMoveNotification, object: panel)
+            NotificationCenter.default.removeObserver(self, name: NSWindow.didResizeNotification, object: panel)
             NotificationCenter.default.removeObserver(self, name: NSWindow.willCloseNotification, object: panel)
             panel.close()
         }
@@ -138,26 +150,34 @@ final class FloatingPanelController {
 
     // MARK: - Private
 
-    @objc private func windowDidMove(_ notification: Notification) {
-        savePosition()
+    @objc private func windowDidMoveOrResize(_ notification: Notification) {
+        saveState()
     }
     
     @objc private func windowWillClose(_ notification: Notification) {
         UserDefaults.standard.set(false, forKey: Self.isVisibleKey)
     }
 
-    private func savePosition() {
+    private func saveState() {
         guard let frame = panel?.frame else { return }
         UserDefaults.standard.set(Double(frame.origin.x), forKey: Self.positionXKey)
         UserDefaults.standard.set(Double(frame.origin.y), forKey: Self.positionYKey)
+        UserDefaults.standard.set(Double(frame.size.width), forKey: Self.sizeWidthKey)
+        UserDefaults.standard.set(Double(frame.size.height), forKey: Self.sizeHeightKey)
         UserDefaults.standard.set(true, forKey: Self.hasSavedPositionKey)
     }
 
-    private func savedPosition() -> NSPoint? {
+    private func savedFrame() -> NSRect? {
         guard UserDefaults.standard.bool(forKey: Self.hasSavedPositionKey) else { return nil }
         let x = UserDefaults.standard.double(forKey: Self.positionXKey)
         let y = UserDefaults.standard.double(forKey: Self.positionYKey)
-        return NSPoint(x: x, y: y)
+        let width = UserDefaults.standard.double(forKey: Self.sizeWidthKey)
+        let height = UserDefaults.standard.double(forKey: Self.sizeHeightKey)
+        
+        if width > 0 && height > 0 {
+            return NSRect(x: x, y: y, width: width, height: height)
+        }
+        return NSRect(x: x, y: y, width: Double(Constants.panelDefaultWidth), height: Double(Constants.panelMinHeight))
     }
 
     /// Default position: top-right corner of the primary screen.

@@ -55,7 +55,7 @@ struct CompactSessionListView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
-        .frame(width: Constants.panelDefaultWidth)
+        .frame(minWidth: Constants.panelMinWidth, maxWidth: .infinity, maxHeight: .infinity)
         .padding(.top, 50)
         .padding(.bottom, 30)
     }
