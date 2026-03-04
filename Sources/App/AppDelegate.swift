@@ -15,7 +15,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusBarController: StatusBarController!
     private var popoverManager: PopoverManager!
     private var floatingPanelController: FloatingPanelController!
-    private var pinStateManager: PinStateManager!
 
     // View models
     private var sessionListVM: SessionListViewModel!
@@ -42,12 +41,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         dailyUsageStore = DailyUsageStore(db: database.dbQueue)
 
         // 2. Initialize adapters & processor
-        let adapter = ClaudeCodeAdapter()
+        let claudeAdapter = ClaudeCodeAdapter()
+        let geminiAdapter = GeminiAdapter()
         eventProcessor = EventProcessor(
             sessionStore: sessionStore,
             eventStore: eventStore,
             dailyUsageStore: dailyUsageStore,
-            adapters: ["claude-code": adapter]
+            adapters: [
+                "claude-code": claudeAdapter,
+                "gemini": geminiAdapter
+            ]
         )
 
         // 3. Initialize HTTP server
@@ -65,66 +68,55 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             dailyUsageStore: dailyUsageStore
         )
 
-        // 5. Initialize window management
-        let contentViewProvider: () -> NSView = { [weak self] in
+        // 5. Initialize floating panel with CompactSessionListView
+        floatingPanelController = FloatingPanelController { [weak self] in
             guard let self else { return NSView() }
-            let rootView = PanelRootView(
-                viewModel: self.sessionListVM,
-                pinStateManager: self.pinStateManager,
-                sessionStore: self.sessionStore,
-                eventStore: self.eventStore,
-                onShowSettings: { [weak self] in self?.showSettings() }
-            )
-            return NSHostingView(rootView: rootView)
+            let compactView = CompactSessionListView(viewModel: self.sessionListVM)
+            return NSHostingView(rootView: compactView)
         }
 
-        // Create managers - need to be created in the right order
-        floatingPanelController = FloatingPanelController(contentViewProvider: contentViewProvider)
-
-        // Create a temporary popover manager to break the circular dependency
-        popoverManager = PopoverManager(contentView: EmptyView())
-        pinStateManager = PinStateManager(
-            popoverManager: popoverManager,
-            floatingPanel: floatingPanelController
-        )
-
-        // Now recreate the popover with the real content
-        let realRootView = PanelRootView(
+        // 6. Initialize popover with PanelRootView
+        let rootView = PanelRootView(
             viewModel: sessionListVM,
-            pinStateManager: pinStateManager,
             sessionStore: sessionStore,
             eventStore: eventStore,
+            onOpenWindow: { [weak self] in
+                self?.openFloatingWindow()
+            },
             onShowSettings: { [weak self] in self?.showSettings() }
         )
-        popoverManager = PopoverManager(contentView: realRootView)
+        popoverManager = PopoverManager(contentView: rootView)
 
-        // Update pin state manager with real popover
-        pinStateManager = PinStateManager(
-            popoverManager: popoverManager,
-            floatingPanel: floatingPanelController
-        )
-
-        // 6. Initialize status bar
+        // 7. Initialize status bar
         statusBarController = StatusBarController { [weak self] in
             guard let self, let button = self.statusBarController.button else { return }
-            self.pinStateManager.handleStatusBarClick(button: button)
+            self.popoverManager.toggle(relativeTo: button)
         }
 
-        // 7. Start periodic tasks
+        // 8. Start periodic tasks
         startPeriodicTasks()
 
-        // 8. Load initial data
+        // 9. Load initial data
         sessionListVM.reload()
         updateStatusBarIcon()
+        
+        // 10. Restore floating panel state
+        floatingPanelController.restoreState()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
         statusUpdateTimer?.invalidate()
         cleanupTimer?.invalidate()
+        floatingPanelController?.close()
         eventServer?.stop()
     }
 
     // MARK: - Window Management
+
+    private func openFloatingWindow() {
+        popoverManager.close()
+        floatingPanelController.show()
+    }
 
     @MainActor
     @objc func showSettings() {

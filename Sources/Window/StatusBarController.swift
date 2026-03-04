@@ -21,12 +21,7 @@ final class StatusBarController: NSObject {
         super.init()
 
         if let button = statusItem.button {
-            let image = NSImage(
-                systemSymbolName: "antenna.radiowaves.left.and.right",
-                accessibilityDescription: Constants.appName
-            )
-            image?.isTemplate = true
-            button.image = image
+            button.image = getMenuIcon()
             button.imagePosition = .imageLeading
             button.target = self
             button.action = #selector(statusBarButtonClicked)
@@ -36,6 +31,35 @@ final class StatusBarController: NSObject {
     var button: NSStatusBarButton? {
         statusItem.button
     }
+    
+    private func getMenuIcon(isError: Bool = false) -> NSImage? {
+        let name = "menubar-icon"
+        var image = NSImage(named: name)
+        
+        if image == nil {
+            if let url = Bundle.main.url(forResource: name, withExtension: "pdf") {
+                image = NSImage(contentsOf: url)
+            } else {
+                let localPath = FileManager.default.currentDirectoryPath + "/Resources/\(name).pdf"
+                if FileManager.default.fileExists(atPath: localPath) {
+                    image = NSImage(contentsOfFile: localPath)
+                }
+            }
+        }
+        
+        if let image = image {
+            image.isTemplate = true
+            image.size = NSSize(width: 18, height: 18)
+            return image
+        }
+        
+        let fallback = NSImage(
+            systemSymbolName: isError ? "antenna.radiowaves.left.and.right.slash" : "antenna.radiowaves.left.and.right",
+            accessibilityDescription: Constants.appName
+        )
+        fallback?.isTemplate = true
+        return fallback
+    }
 
     func updateIcon(_ state: IconState) {
         guard let button = statusItem.button else { return }
@@ -43,34 +67,19 @@ final class StatusBarController: NSObject {
         switch state {
         case .idle:
             stopAnimation()
-            let idleImage = NSImage(
-                systemSymbolName: "antenna.radiowaves.left.and.right",
-                accessibilityDescription: "Idle"
-            )
-            idleImage?.isTemplate = true
-            button.image = idleImage
+            button.image = getMenuIcon()
             button.title = ""
             button.contentTintColor = nil   // let system handle adaptive rendering
 
         case .running(let count):
-            startPulseAnimation()
-            let runningImage = NSImage(
-                systemSymbolName: "antenna.radiowaves.left.and.right",
-                accessibilityDescription: "Running"
-            )
-            runningImage?.isTemplate = true
-            button.image = runningImage
+            stopAnimation()
+            button.image = getMenuIcon()
             button.title = count > 0 ? " \(count)" : ""
             button.contentTintColor = .controlAccentColor
 
         case .error:
             stopAnimation()
-            let errorImage = NSImage(
-                systemSymbolName: "antenna.radiowaves.left.and.right.slash",
-                accessibilityDescription: "Error"
-            )
-            errorImage?.isTemplate = true
-            button.image = errorImage
+            button.image = getMenuIcon(isError: true)
             button.title = ""
             button.contentTintColor = .systemRed
         }

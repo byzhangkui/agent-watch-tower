@@ -1,10 +1,9 @@
 #if canImport(AppKit)
 import SwiftUI
 
-/// Toolbar at the top of the panel with title and Pin button.
+/// Toolbar at the top of the panel with title and action buttons.
 struct PanelToolbarView: View {
-    let isPinned: Bool
-    let onPin: () -> Void
+    let onOpenWindow: () -> Void
     let onSettings: () -> Void
 
     var body: some View {
@@ -35,14 +34,13 @@ struct PanelToolbarView: View {
             .buttonStyle(.plain)
             .help("Quit Application")
 
-            Button(action: onPin) {
-                Image(systemName: isPinned ? "pin.slash.fill" : "pin.fill")
+            Button(action: onOpenWindow) {
+                Image(systemName: "macwindow.badge.plus")
                     .font(.body)
-                    .foregroundStyle(isPinned ? .blue : .secondary)
-                    .rotationEffect(.degrees(isPinned ? 0 : 45))
+                    .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
-            .help(isPinned ? "Unpin from screen" : "Pin as floating window")
+            .help("Open as window")
         }
         .padding(.horizontal, Constants.contentPadding)
         .padding(.vertical, 8)

@@ -1,24 +1,22 @@
 import Foundation
 
-struct ClaudeCodeAdapter: AgentAdapter {
-    let agentType: AgentType = .claudeCode
+struct GeminiAdapter: AgentAdapter {
+    let agentType: AgentType = .gemini
 
     func describeAction(from payload: HookPayload) -> String? {
         // Non-tool lifecycle events
         if payload.toolName == nil {
             switch payload.hookEventName {
-            case "UserPromptSubmit":
-                return "User Input"
             case "SessionStart":
                 let src = payload.source ?? "startup"
                 return src == "resume" ? "Session Resumed" : "Session Started"
-            case "Stop":
+            case "SessionEnd":
                 return "Session Ended"
             case "Notification":
                 return "Notification"
-            case "SubagentStart":
+            case "BeforeAgent":
                 return "Agent Started: \(payload.agentName ?? "subagent")"
-            case "SubagentStop":
+            case "AfterAgent":
                 return "Agent Stopped: \(payload.agentName ?? "subagent")"
             default:
                 return payload.hookEventName
@@ -29,33 +27,30 @@ struct ClaudeCodeAdapter: AgentAdapter {
         let input = payload.toolInput
 
         switch toolName {
-        case "Edit":
+        case "replace":
             let file = input?.filePath.flatMap { URL(fileURLWithPath: $0).lastPathComponent }
-            return "Editing \(file ?? "file")"
-        case "Write":
+            return "Replacing text in \(file ?? "file")"
+        case "write_file":
             let file = input?.filePath.flatMap { URL(fileURLWithPath: $0).lastPathComponent }
             return "Writing \(file ?? "file")"
-        case "Read":
+        case "read_file":
             let file = input?.filePath.flatMap { URL(fileURLWithPath: $0).lastPathComponent }
             return "Reading \(file ?? "file")"
-        case "Bash":
+        case "run_shell_command":
             let cmd = input?.command.map { String($0.prefix(40)) } ?? input?.description
             return "Running \(cmd ?? "command")..."
-        case "Grep":
+        case "grep_search":
             let pattern = input?.pattern ?? ""
             return "Searching \"\(pattern)\""
-        case "Glob":
-            let pattern = input?.pattern ?? ""
+        case "glob":
+            let pattern = input?.pattern ?? input?.glob ?? ""
             return "Finding \(pattern)"
-        case "Agent":
-            let desc = input?.description ?? "subagent"
-            return "Agent: \(desc)"
-        case "TodoWrite":
-            return "Updating tasks"
-        case "WebSearch":
-            return "Searching web"
-        case "WebFetch":
-            return "Fetching web content"
+        case "codebase_investigator":
+            return "Investigating codebase"
+        case "browser_agent":
+            return "Browsing web"
+        case "cli_help":
+            return "Checking CLI Help"
         default:
             return toolName
         }
@@ -64,15 +59,15 @@ struct ClaudeCodeAdapter: AgentAdapter {
     func parseEvent(from payload: HookPayload) -> AgentEvent? {
         let eventType: EventType
         switch payload.hookEventName {
-        case "PreToolUse":
+        case "BeforeTool":
             eventType = .toolCall
-        case "PostToolUse":
+        case "AfterTool":
             eventType = .toolResult
-        case "Stop", "Notification", "SessionStart", "UserPromptSubmit":
+        case "SessionEnd", "Notification", "SessionStart":
             eventType = .message
-        case "SubagentStart":
+        case "BeforeAgent":
             eventType = .subagentStart
-        case "SubagentStop":
+        case "AfterAgent":
             eventType = .subagentStop
         default:
             eventType = .message
@@ -82,11 +77,10 @@ struct ClaudeCodeAdapter: AgentAdapter {
         let rawJson = try? JSONEncoder().encode(payload)
         let rawString = rawJson.flatMap { String(data: $0, encoding: .utf8) }
 
-        // Use toolUseId with event-type suffix to avoid primary key collision
-        // between PreToolUse and PostToolUse for the same tool call
+        // Use toolUseId with event-type suffix if available, else generate UUID
         let eventId: String
-        if let toolUseId = payload.toolUseId {
-            let suffix = payload.hookEventName == "PostToolUse" ? "-post" : "-pre"
+        if let toolUseId = payload.toolUseId ?? payload.id {
+            let suffix = payload.hookEventName == "AfterTool" ? "-post" : "-pre"
             eventId = toolUseId + suffix
         } else {
             eventId = UUID().uuidString
@@ -95,11 +89,11 @@ struct ClaudeCodeAdapter: AgentAdapter {
         return AgentEvent(
             id: eventId,
             sessionId: payload.sessionId,
-            timestamp: Date().timeIntervalSince1970,
+            timestamp: payload.timestampDate?.timeIntervalSince1970 ?? Date().timeIntervalSince1970,
             eventType: eventType,
             toolName: payload.toolName,
             inputSummary: describeAction(from: payload),
-            outputSummary: payload.hookEventName == "PostToolUse"
+            outputSummary: payload.hookEventName == "AfterTool"
                 ? payload.toolResponse?.summary
                 : nil,
             rawPayload: rawString
@@ -107,26 +101,22 @@ struct ClaudeCodeAdapter: AgentAdapter {
     }
 
     func updateSession(from payload: HookPayload, existing: AgentSession?) -> AgentSession {
-        let now = Date().timeIntervalSince1970
+        let now = payload.timestampDate?.timeIntervalSince1970 ?? Date().timeIntervalSince1970
 
         if var session = existing {
             switch payload.hookEventName {
-            case "PreToolUse":
+            case "BeforeTool":
                 session.status = .running
                 session.currentAction = describeAction(from: payload)
                 session.updatedAt = now
 
-            case "PostToolUse":
+            case "AfterTool":
                 session.status = .running
-                session.currentAction = nil  // Clear after tool finishes; next PreToolUse will set it
+                session.currentAction = nil  // Clear after tool finishes; next BeforeTool will set it
                 session.updatedAt = now
-                // Check if it's a TodoWrite to update progress
-                if payload.toolName == "TodoWrite" {
-                    updateTodoProgress(from: payload, session: &session)
-                }
 
-            case "Stop":
-                session.status = .completed
+            case "SessionEnd":
+                session.status = payload.reason == "error" ? .error : .completed
                 session.endedAt = now
                 session.currentAction = nil
                 session.updatedAt = now
@@ -134,22 +124,15 @@ struct ClaudeCodeAdapter: AgentAdapter {
             case "Notification":
                 session.updatedAt = now
 
-            case "SubagentStart":
+            case "BeforeAgent":
                 session.currentAction = "Agent: \(payload.agentName ?? "subagent")"
                 session.updatedAt = now
 
-            case "SubagentStop":
-                // A subagent ending does NOT mean the parent session ended.
-                // If a prior Stop event incorrectly marked this session as completed, restore it.
-                if session.status == .completed {
+            case "AfterAgent":
+                if session.status == .completed || session.status == .error {
                     session.status = .running
                     session.endedAt = nil
                 }
-                session.currentAction = nil
-                session.updatedAt = now
-
-            case "UserPromptSubmit":
-                session.status = .running
                 session.currentAction = nil
                 session.updatedAt = now
 
@@ -168,28 +151,10 @@ struct ClaudeCodeAdapter: AgentAdapter {
         } else {
             return AgentSession.create(
                 id: payload.sessionId,
-                agentType: .claudeCode,
+                agentType: .gemini,
                 projectDir: payload.cwd ?? "Unknown Directory",
                 model: payload.model
             )
         }
-    }
-
-    // MARK: - Private
-
-    private func updateTodoProgress(from payload: HookPayload, session: inout AgentSession) {
-        // TodoWrite payload contains the full todo list in toolInput
-        // We parse it to extract completed/total counts
-        guard let rawPayload = try? JSONEncoder().encode(payload),
-              let json = try? JSONSerialization.jsonObject(with: rawPayload) as? [String: Any],
-              let toolInput = json["tool_input"] as? [String: Any],
-              let todos = toolInput["todos"] as? [[String: Any]] else {
-            return
-        }
-
-        let total = todos.count
-        let completed = todos.filter { ($0["status"] as? String) == "completed" }.count
-        session.todoCompleted = completed
-        session.todoTotal = total
     }
 }

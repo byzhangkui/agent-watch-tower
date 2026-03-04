@@ -1,0 +1,15 @@
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Concept: AI Sparkle with Orbiting Monitoring Ring -->
+  
+  <!-- Outer Orbit / Watch Ring (representing monitoring/radar) -->
+  <circle cx="50" cy="50" r="42" fill="none" stroke="#000000" stroke-width="6" stroke-dasharray="24 16" />
+  
+  <!-- Inner Orbit (continuous) -->
+  <circle cx="50" cy="50" r="30" fill="none" stroke="#000000" stroke-width="4" opacity="0.5" />
+  
+  <!-- AI Agent Sparkle (The Core) -->
+  <path d="M 50 18 C 50 36 36 50 18 50 C 36 50 50 64 50 82 C 50 64 64 50 82 50 C 64 50 50 36 50 18 Z" fill="#000000"/>
+  
+  <!-- Active Status Blip (Optional: can be colored green when running) -->
+  <circle cx="85" cy="15" r="8" fill="#000000" />
+</svg>

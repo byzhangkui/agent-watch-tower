@@ -9,32 +9,43 @@ struct SessionListView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: Constants.cardSpacing) {
+            LazyVStack(spacing: 0) {
                 // Active sessions
                 if !viewModel.activeSessions.isEmpty {
                     ForEach(viewModel.activeSessions) { session in
                         NavigationLink(value: session) {
-                            SessionCardView(session: session)
+                            SessionCardView(session: session) {
+                                viewModel.delete(session: session)
+                            }
                         }
                         .buttonStyle(.plain)
                         .transition(.asymmetric(
                             insertion: .move(edge: .top).combined(with: .opacity),
                             removal: .opacity.combined(with: .scale(scale: 0.95))
                         ))
+                        
+                        if session.id != viewModel.activeSessions.last?.id || !viewModel.completedSessions.isEmpty {
+                            Divider()
+                                .padding(.horizontal, 16)
+                        }
                     }
                 }
 
                 // Completed sessions (today)
                 if !viewModel.completedSessions.isEmpty {
-                    Divider()
-                        .padding(.horizontal, Constants.contentPadding)
-
                     ForEach(viewModel.completedSessions) { session in
                         NavigationLink(value: session) {
-                            SessionCardView(session: session)
+                            SessionCardView(session: session) {
+                                viewModel.delete(session: session)
+                            }
                                 .opacity(0.7)
                         }
                         .buttonStyle(.plain)
+                        
+                        if session.id != viewModel.completedSessions.last?.id {
+                            Divider()
+                                .padding(.horizontal, 16)
+                        }
                     }
                 }
 
@@ -43,7 +54,6 @@ struct SessionListView: View {
                     emptyState
                 }
             }
-            .padding(.horizontal, Constants.contentPadding)
             .padding(.vertical, Constants.cardSpacing)
             .animation(.spring(duration: 0.3), value: viewModel.sessions)
         }

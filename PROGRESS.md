@@ -1,5 +1,43 @@
 # Progress Record
 
+## [2026-03-04] PostToolUse 事件丢失 — 主键冲突 bug
+
+- **遇到了什么问题：**
+  Session 详情页的 RECENT EVENTS 列表停止更新，新的工具调用事件没有被记录。Session 状态（Running / current action）正常更新，但 events 表没有新数据。
+
+- **如何解决的：**
+  1. **根因**：`ClaudeCodeAdapter.parseEvent()` 中 `id` 取值为 `payload.toolUseId ?? UUID().uuidString`。`PreToolUse` 和 `PostToolUse` 共享同一个 `toolUseId`，导致 PostToolUse 的 INSERT 因主键冲突失败。而 `EventProcessor` 用 `try?` 吞掉了错误，完全无感知。
+  2. **修复**：为 event id 添加事件类型后缀（`-pre` / `-post`），确保 PreToolUse 和 PostToolUse 生成不同的主键。
+  3. **错误可见性**：将 `try? eventStore.insert(event)` 改为 `do/catch`，失败时 print 错误信息，避免再次被静默吞掉。
+
+- **以后如何避免：**
+  - 当多个不同的业务事件共享同一个外部 ID（如 toolUseId）时，**不能直接用它做主键**，必须附加区分后缀或生成独立 ID。
+  - **永远不要用 `try?` 吃掉写入操作的错误**，至少要打印日志，否则数据丢失时完全无法排查。
+
+## [2026-03-04] 浮窗精简 + 图标替换 + Status Guide
+
+- **做了什么：**
+  1. **去掉浮窗标题栏**：FloatingPanelController 使用 `.fullSizeContentView` + `titlebarAppearsTransparent` + `titleVisibility = .hidden`，仅保留标准关闭按钮。
+  2. **App 图标替换**：将 `icon-concept-3.svg` 通过 cairosvg + iconutil 转换为 `Resources/AppIcon.icns`。
+  3. **浮窗去掉 input/output**：SessionCardView 新增 `showTokenUsage` 参数，CompactSessionListView 传 `false`。
+  4. **浮窗去掉今日统计**：CompactSessionListView 移除 DailySummaryView。
+  5. **Settings 新增 Status Guide 标签页**：列出所有 6 种状态指示器的颜色含义。
+
+## [2026-03-04] 用 Pin 替换为独立置顶窗口 + waitingForUser 状态提醒
+
+- **做了什么：**
+  1. **移除 Pin 机制**：删除 `PinStateManager.swift`，移除 `PanelToolbarView` 和 `PanelRootView` 中对 `isPinned` / `pinStateManager` 的依赖。
+  2. **新增"打开窗口"按钮**：在 `PanelToolbarView` 中将原来的 Pin 按钮替换为 `macwindow.badge.plus` 图标，点击后关闭 Popover 并打开独立置顶窗口。
+  3. **创建 `CompactSessionListView`**：独立窗口的内容视图，包含 DailySummary + SessionCard 列表，无 NavigationStack / NavigationLink，纯展示。
+  4. **重写 `FloatingPanelController`**：移除 `at frame:` 参数，新增 `toggle()` 方法，默认定位屏幕右上角，通过 UserDefaults 保存/恢复窗口位置。
+  5. **简化 `AppDelegate`**：移除 `pinStateManager`，Popover 的 `onOpenWindow` 回调 → 关闭 Popover + 显示浮动面板；状态栏点击 → `popoverManager.toggle()`。
+  6. **waitingForUser 状态提醒**：在 `SessionCardView` 中为 `waitingForUser` 状态添加橙色 "Needs Input" 徽章（带脉冲动画）和橙色边框高亮。
+
+- **改动文件：**
+  - 修改：`PanelToolbarView.swift`, `PanelRootView.swift`, `FloatingPanelController.swift`, `AppDelegate.swift`, `SessionCardView.swift`
+  - 新建：`CompactSessionListView.swift`
+  - 删除：`PinStateManager.swift`
+
 ## [2026-03-04] Session 自动消失 / 列表顺序不稳定
 
 - **遇到了什么问题：**

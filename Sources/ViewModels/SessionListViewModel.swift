@@ -44,14 +44,30 @@ final class SessionListViewModel {
 
     func reload() {
         // Keep existing sessions on DB error to avoid flickering / disappearing
-        if let fetched = try? sessionStore.todaySessions() {
-            sessions = fetched
+        do {
+            let fetched = try sessionStore.todaySessions()
+            print("SessionListViewModel: Fetched \(fetched.count) sessions from DB. Active: \(fetched.filter { $0.isActive }.count), Completed: \(fetched.filter { !$0.isActive }.count)")
+            self.sessions = fetched
+        } catch {
+            print("SessionListViewModel Error fetching sessions: \(error)")
         }
 
-        if let usage = try? dailyUsageStore.todayTotalUsage() {
-            dailyTokens = usage.totalTokens
-            dailyCost = usage.estimatedCost
-            dailySessions = usage.totalSessions
+        do {
+            let usage = try dailyUsageStore.todayTotalUsage()
+            self.dailyTokens = usage.totalTokens
+            self.dailyCost = usage.estimatedCost
+            self.dailySessions = usage.totalSessions
+        } catch {
+            print("SessionListViewModel Error fetching daily usage: \(error)")
+        }
+    }
+
+    func delete(session: AgentSession) {
+        do {
+            try sessionStore.delete(session)
+            reload()
+        } catch {
+            print("Failed to delete session: \(error)")
         }
     }
 

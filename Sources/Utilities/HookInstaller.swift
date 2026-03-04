@@ -1,8 +1,8 @@
 import Foundation
 
 struct HookInstaller {
-    static let hookRoutes: [(event: String, path: String)] = [
-        ("UserPromptSubmit", "/events/user-prompt-submit"),  // Fires immediately on user input
+    static let claudeHookRoutes: [(event: String, path: String)] = [
+        ("UserPromptSubmit", "/events/user-prompt-submit"),
         ("PreToolUse",    "/events/pre-tool-use"),
         ("PostToolUse",   "/events/post-tool-use"),
         ("Notification",  "/events/notification"),
@@ -11,13 +11,35 @@ struct HookInstaller {
         ("SubagentStart", "/events/subagent-start"),
         ("SubagentStop",  "/events/subagent-stop"),
     ]
+    
+    static let geminiHookEvents = [
+        "SessionStart", "SessionEnd", "BeforeTool", "AfterTool", "BeforeAgent", "AfterAgent"
+    ]
 
-    /// Install HTTP hooks into ~/.claude/settings.json
+    /// Install HTTP hooks into both ~/.claude/settings.json and ~/.gemini/settings.json
     static func install(port: UInt16 = Constants.httpPort) throws {
-        var settings = try readExistingSettings()
+        try installClaudeHooks(port: port)
+        try installGeminiHooks(port: port)
+    }
+
+    /// Remove Watch Tower hooks from both tools
+    static func uninstall(port: UInt16 = Constants.httpPort) throws {
+        try uninstallClaudeHooks(port: port)
+        try uninstallGeminiHooks(port: port)
+    }
+
+    /// Check if hooks are currently installed in *both* tools (or at least partially)
+    static func isInstalled(port: UInt16 = Constants.httpPort) -> Bool {
+        return isClaudeInstalled(port: port) || isGeminiInstalled(port: port)
+    }
+
+    // MARK: - Claude Code Hooks
+
+    static func installClaudeHooks(port: UInt16 = Constants.httpPort) throws {
+        var settings = try readExistingSettings(at: Constants.claudeSettingsPath)
 
         var hooks = settings["hooks"] as? [String: Any] ?? [:]
-        for route in hookRoutes {
+        for route in claudeHookRoutes {
             let hookEntry: [String: Any] = [
                 "type": "http",
                 "url": "http://localhost:\(port)\(route.path)",
@@ -30,7 +52,6 @@ struct HookInstaller {
 
             var existing = hooks[route.event] as? [[String: Any]] ?? []
 
-            // Check if already installed to avoid duplicates
             let alreadyInstalled = existing.contains { entry in
                 let innerHooks = entry["hooks"] as? [[String: Any]] ?? []
                 return innerHooks.contains { h in
@@ -45,16 +66,15 @@ struct HookInstaller {
         }
 
         settings["hooks"] = hooks
-        try writeSettings(settings)
+        try writeSettings(settings, to: Constants.claudeSettingsPath)
     }
 
-    /// Remove Watch Tower hooks from ~/.claude/settings.json
-    static func uninstall(port: UInt16 = Constants.httpPort) throws {
-        var settings = try readExistingSettings()
+    static func uninstallClaudeHooks(port: UInt16 = Constants.httpPort) throws {
+        var settings = try readExistingSettings(at: Constants.claudeSettingsPath)
 
         guard var hooks = settings["hooks"] as? [String: Any] else { return }
 
-        for route in hookRoutes {
+        for route in claudeHookRoutes {
             guard var entries = hooks[route.event] as? [[String: Any]] else { continue }
             entries.removeAll { entry in
                 let innerHooks = entry["hooks"] as? [[String: Any]] ?? []
@@ -70,18 +90,16 @@ struct HookInstaller {
         }
 
         settings["hooks"] = hooks.isEmpty ? nil : hooks
-        try writeSettings(settings)
+        try writeSettings(settings, to: Constants.claudeSettingsPath)
     }
 
-    /// Check if hooks are currently installed
-    static func isInstalled(port: UInt16 = Constants.httpPort) -> Bool {
-        guard let settings = try? readExistingSettings(),
+    static func isClaudeInstalled(port: UInt16 = Constants.httpPort) -> Bool {
+        guard let settings = try? readExistingSettings(at: Constants.claudeSettingsPath),
               let hooks = settings["hooks"] as? [String: Any] else {
             return false
         }
 
-        // Check if at least one of our hooks exists
-        for route in hookRoutes {
+        for route in claudeHookRoutes {
             guard let entries = hooks[route.event] as? [[String: Any]] else { continue }
             let found = entries.contains { entry in
                 let innerHooks = entry["hooks"] as? [[String: Any]] ?? []
@@ -95,10 +113,91 @@ struct HookInstaller {
         return false
     }
 
+    // MARK: - Gemini CLI Hooks
+
+    static func installGeminiHooks(port: UInt16 = Constants.httpPort) throws {
+        var settings = try readExistingSettings(at: Constants.geminiSettingsPath)
+
+        var hooks = settings["hooks"] as? [String: Any] ?? [:]
+        let curlCommand = "curl -s -X POST -H \"Content-Type: application/json\" -d @- http://localhost:\(port)/events > /dev/null && echo '{}'"
+
+        for eventName in geminiHookEvents {
+            let hookEntry: [String: Any] = [
+                "name": "send-to-watch-tower",
+                "type": "command",
+                "command": curlCommand
+            ]
+            let matcherEntry: [String: Any] = [
+                "matcher": "*",
+                "hooks": [hookEntry]
+            ]
+
+            var existing = hooks[eventName] as? [[String: Any]] ?? []
+
+            let alreadyInstalled = existing.contains { entry in
+                let innerHooks = entry["hooks"] as? [[String: Any]] ?? []
+                return innerHooks.contains { h in
+                    (h["name"] as? String) == "send-to-watch-tower"
+                }
+            }
+
+            if !alreadyInstalled {
+                existing.append(matcherEntry)
+            }
+            hooks[eventName] = existing
+        }
+
+        settings["hooks"] = hooks
+        try writeSettings(settings, to: Constants.geminiSettingsPath)
+    }
+
+    static func uninstallGeminiHooks(port: UInt16 = Constants.httpPort) throws {
+        var settings = try readExistingSettings(at: Constants.geminiSettingsPath)
+
+        guard var hooks = settings["hooks"] as? [String: Any] else { return }
+
+        for eventName in geminiHookEvents {
+            guard var entries = hooks[eventName] as? [[String: Any]] else { continue }
+            entries.removeAll { entry in
+                let innerHooks = entry["hooks"] as? [[String: Any]] ?? []
+                return innerHooks.contains { h in
+                    (h["name"] as? String) == "send-to-watch-tower"
+                }
+            }
+            if entries.isEmpty {
+                hooks.removeValue(forKey: eventName)
+            } else {
+                hooks[eventName] = entries
+            }
+        }
+
+        settings["hooks"] = hooks.isEmpty ? nil : hooks
+        try writeSettings(settings, to: Constants.geminiSettingsPath)
+    }
+
+    static func isGeminiInstalled(port: UInt16 = Constants.httpPort) -> Bool {
+        guard let settings = try? readExistingSettings(at: Constants.geminiSettingsPath),
+              let hooks = settings["hooks"] as? [String: Any] else {
+            return false
+        }
+
+        for eventName in geminiHookEvents {
+            guard let entries = hooks[eventName] as? [[String: Any]] else { continue }
+            let found = entries.contains { entry in
+                let innerHooks = entry["hooks"] as? [[String: Any]] ?? []
+                return innerHooks.contains { h in
+                    (h["name"] as? String) == "send-to-watch-tower"
+                }
+            }
+            if found { return true }
+        }
+
+        return false
+    }
+
     // MARK: - Private
 
-    private static func readExistingSettings() throws -> [String: Any] {
-        let path = Constants.claudeSettingsPath
+    private static func readExistingSettings(at path: URL) throws -> [String: Any] {
         guard FileManager.default.fileExists(atPath: path.path) else {
             return [:]
         }
@@ -106,9 +205,7 @@ struct HookInstaller {
         return (try JSONSerialization.jsonObject(with: data) as? [String: Any]) ?? [:]
     }
 
-    private static func writeSettings(_ settings: [String: Any]) throws {
-        let path = Constants.claudeSettingsPath
-
+    private static func writeSettings(_ settings: [String: Any], to path: URL) throws {
         // Ensure parent directory exists
         let dir = path.deletingLastPathComponent()
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)

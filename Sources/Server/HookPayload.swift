@@ -22,6 +22,11 @@ struct HookPayload: Codable {
     // SubagentStart / SubagentStop
     let agentName: String?
     let agentType: String?
+    
+    // Gemini specifics
+    let timestamp: String?
+    let reason: String?
+    let id: String?
 
     enum CodingKeys: String, CodingKey {
         case sessionId = "session_id"
@@ -35,6 +40,19 @@ struct HookPayload: Codable {
         case source, model
         case agentName = "agent_name"
         case agentType = "agent_type"
+        case timestamp, reason, id
+    }
+    
+    // Helper to get Date from ISO8601 string if present
+    var timestampDate: Date? {
+        guard let ts = timestamp else { return nil }
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = formatter.date(from: ts) {
+            return date
+        }
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter.date(from: ts)
     }
 }
 

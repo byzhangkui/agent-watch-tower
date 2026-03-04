@@ -43,4 +43,9 @@ enum Constants {
         FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent(".claude/settings.json")
     }
+
+    static var geminiSettingsPath: URL {
+        FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".gemini/settings.json")
+    }
 }

@@ -1,0 +1,8 @@
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Concept 2: AI Sparkle (Agent) + Status -->
+  <!-- Represents the "Agent" intelligence -->
+  <path d="M 50 10 C 50 35 35 50 10 50 C 35 50 50 65 50 90 C 50 65 65 50 90 50 C 65 50 50 35 50 10 Z" fill="#000000"/>
+  
+  <!-- Separate status indicator dot (can light up green when running) -->
+  <circle cx="85" cy="15" r="10" fill="#000000" />
+</svg>

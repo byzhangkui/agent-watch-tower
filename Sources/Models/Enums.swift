@@ -15,7 +15,7 @@ enum AgentType: String, Codable, Hashable {
 
     var brandColor: String {
         switch self {
-        case .claudeCode: "#8B5CF6"
+        case .claudeCode: "#bf5af2" // Purple
         case .gemini: "#2563EB"
         }
     }

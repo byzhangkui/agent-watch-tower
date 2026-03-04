@@ -1,0 +1,12 @@
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Concept 3: The Watcher (Abstract Eye / Lens) -->
+  <!-- Outer eye shape -->
+  <path d="M 10 50 C 30 15 70 15 90 50 C 70 85 30 85 10 50 Z" fill="none" stroke="#000000" stroke-width="8" stroke-linejoin="round"/>
+  
+  <!-- Pupil / Lens -->
+  <circle cx="50" cy="50" r="16" fill="none" stroke="#000000" stroke-width="8"/>
+  <circle cx="50" cy="50" r="6" fill="#000000"/>
+  
+  <!-- Active Status Dot -->
+  <circle cx="85" cy="15" r="8" fill="#000000" />
+</svg>

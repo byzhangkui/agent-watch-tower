@@ -4,71 +4,135 @@ import SwiftUI
 /// A compact card displaying a single agent session's status.
 struct SessionCardView: View {
     let session: AgentSession
+    var showTokenUsage: Bool = true
+    var onRemove: (() -> Void)? = nil
+
+    @Environment(\.colorScheme) var colorScheme
+    @State private var alertPulse = false
+    @State private var isHovered = false
+
+    private var isWaiting: Bool { session.status == .waitingForUser }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            // Row 1: Status indicator + agent type + duration
-            HStack {
-                StatusIndicator(status: session.status)
+        HStack(alignment: .top, spacing: 12) {
+            // Status indicator dot
+            StatusIndicator(status: session.status)
+                .padding(.top, 5)
 
-                Text(session.agentType.displayName)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundStyle(agentColor)
+            VStack(alignment: .leading, spacing: 6) {
+                // Row 1: Agent type + duration
+                HStack(alignment: .top) {
+                    Text(session.agentType.displayName)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(agentColor)
 
-                Spacer()
+                    Spacer()
 
-                // Live duration for active sessions, static for completed
-                if session.isActive {
-                    TimelineView(.periodic(from: .now, by: 1.0)) { context in
-                        durationLabel(now: context.date)
+                    // Waiting-for-user badge
+                    if isWaiting {
+                        HStack(spacing: 3) {
+                            Image(systemName: "exclamationmark.circle.fill")
+                                .font(.caption2)
+                            Text("Needs Input")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                        }
+                        .foregroundStyle(.orange)
+                        .opacity(alertPulse ? 1.0 : 0.5)
+                        .animation(
+                            .easeInOut(duration: 1.0).repeatForever(autoreverses: true),
+                            value: alertPulse
+                        )
+                        .onAppear { alertPulse = true }
                     }
-                } else {
-                    durationLabel(now: Date())
+
+                    // Live duration for active sessions, static for completed
+                    if session.isActive {
+                        TimelineView(.periodic(from: .now, by: 1.0)) { context in
+                            durationLabel(now: context.date)
+                        }
+                    } else {
+                        durationLabel(now: Date())
+                    }
+                    
+                    if let onRemove {
+                        Button(action: onRemove) {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundStyle(Color.white.opacity(0.5))
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.leading, 4)
+                        .opacity(isHovered ? 1.0 : 0.0)
+                        .help("Remove Session")
+                    }
                 }
-            }
 
-            // Row 2: Project directory
-            Text(session.projectName)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
+                // Row 2: Project directory
+                Text(session.projectName)
+                    .font(.system(size: 13, weight: .regular))
+                    .foregroundStyle(Color.white.opacity(0.7))
+                    .lineLimit(1)
 
-            // Row 3: Current action
-            if let action = session.currentAction {
-                HStack(spacing: 4) {
-                    actionIcon
-                    Text(action)
-                        .font(.caption)
-                        .lineLimit(1)
+                // Row 3: Current action
+                if session.status == .completed {
+                    HStack(spacing: 6) {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 10, weight: .bold))
+                        Text("Completed")
+                            .font(.system(size: 13, design: .monospaced))
+                    }
+                    .foregroundStyle(Color.white.opacity(0.5))
+                } else if let action = session.currentAction {
+                    HStack(spacing: 6) {
+                        if session.status == .running {
+                            Image(systemName: "play.fill")
+                                .font(.system(size: 10))
+                                .foregroundStyle(.green)
+                            Text(action)
+                                .font(.system(size: 13, design: .monospaced))
+                                .foregroundStyle(.white)
+                                .lineLimit(1)
+                        } else {
+                            Text(action)
+                                .font(.system(size: 13, design: .monospaced))
+                                .foregroundStyle(Color.white.opacity(0.7))
+                                .lineLimit(1)
+                        }
+                    }
                 }
-                .foregroundStyle(.primary)
-            } else if session.status == .completed {
-                HStack(spacing: 4) {
-                    Image(systemName: "checkmark")
-                        .font(.caption2)
-                    Text("Completed")
-                        .font(.caption)
+
+                // Row 4: Progress bar (if available)
+                if let completed = session.todoCompleted, let total = session.todoTotal, total > 0 {
+                    ProgressBarView(completed: completed, total: total)
+                        .padding(.top, 4)
                 }
-                .foregroundStyle(.secondary)
-            }
 
-            // Row 4: Progress bar (if available)
-            if let completed = session.todoCompleted, let total = session.todoTotal, total > 0 {
-                ProgressBarView(completed: completed, total: total)
-            }
-
-            // Row 5: Token usage
-            if session.totalTokens > 0 {
-                TokenBadgeView(
-                    inputTokens: session.tokensInput ?? 0,
-                    outputTokens: session.tokensOutput ?? 0
-                )
+                // Row 5: Token usage
+                if showTokenUsage, session.totalTokens > 0 {
+                    TokenBadgeView(
+                        inputTokens: session.tokensInput ?? 0,
+                        outputTokens: session.tokensOutput ?? 0
+                    )
+                    .padding(.top, 4)
+                }
             }
         }
-        .padding(Constants.contentPadding)
-        .background(Color(nsColor: .controlBackgroundColor))
-        .clipShape(RoundedRectangle(cornerRadius: Constants.cardCornerRadius))
+        .padding(.vertical, 10)
+        .padding(.horizontal, 16)
+        .background(Color.clear)
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isHovered = hovering
+            }
+        }
+        .contextMenu {
+            if let onRemove {
+                Button(role: .destructive, action: onRemove) {
+                    Label("Remove Session", systemImage: "trash")
+                }
+            }
+        }
     }
 
     // MARK: - Private
@@ -80,36 +144,21 @@ struct SessionCardView: View {
         let text = minutes < 60
             ? "\(minutes)m"
             : "\(minutes / 60)h \(minutes % 60)m"
-        return HStack(spacing: 2) {
+        return HStack(spacing: 4) {
             Image(systemName: "clock")
-                .font(.caption2)
+                .font(.system(size: 12))
             Text(text)
-                .font(.caption)
+                .font(.system(size: 13))
         }
-        .foregroundStyle(.secondary)
+        .foregroundStyle(Color.white.opacity(0.5))
     }
 
     private var agentColor: Color {
-        Color(hex: session.agentType.brandColor)
-    }
-
-    @ViewBuilder
-    private var actionIcon: some View {
-        switch session.status {
-        case .thinking:
-            Image(systemName: "brain")
-                .font(.caption2)
-                .foregroundStyle(.blue)
-        case .running:
-            Image(systemName: "play.fill")
-                .font(.caption2)
-                .foregroundStyle(.green)
-        case .waitingForUser:
-            Image(systemName: "pause.fill")
-                .font(.caption2)
-                .foregroundStyle(.yellow)
-        default:
-            EmptyView()
+        switch session.agentType {
+        case .claudeCode:
+            return Color(hex: "#FF9D7E") // Claude Coral
+        case .gemini:
+            return Color(hex: "#8CBFFF") // Gemini Cyan
         }
     }
 }

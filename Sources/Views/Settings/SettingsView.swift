@@ -16,8 +16,13 @@ struct SettingsView: View {
                 .tabItem {
                     Label("Agents", systemImage: "antenna.radiowaves.left.and.right")
                 }
+
+            statusGuideTab
+                .tabItem {
+                    Label("Status Guide", systemImage: "circle.fill")
+                }
         }
-        .frame(width: 450, height: 300)
+        .frame(width: 450, height: 360)
         .alert("Hook Configuration", isPresented: $viewModel.showInstallAlert) {
             Button("OK") {}
         } message: {
@@ -68,6 +73,65 @@ struct SettingsView: View {
         .padding()
     }
 
+    // MARK: - Status Guide Tab
+
+    @ViewBuilder
+    private var statusGuideTab: some View {
+        Form {
+            Section("Session Status Indicators") {
+                statusRow(
+                    status: .running,
+                    label: "Running",
+                    description: "Agent is actively executing tools or writing code"
+                )
+                statusRow(
+                    status: .thinking,
+                    label: "Thinking",
+                    description: "Agent is analyzing and generating a response"
+                )
+                statusRow(
+                    status: .waitingForUser,
+                    label: "Waiting for User",
+                    description: "Agent needs your input to continue"
+                )
+                statusRow(
+                    status: .idle,
+                    label: "Idle",
+                    description: "Session is idle with no active task"
+                )
+                statusRow(
+                    status: .completed,
+                    label: "Completed",
+                    description: "Session finished successfully"
+                )
+                statusRow(
+                    status: .error,
+                    label: "Error",
+                    description: "Session encountered an error"
+                )
+            }
+        }
+        .formStyle(.grouped)
+        .padding()
+    }
+
+    private func statusRow(status: SessionStatus, label: String, description: String) -> some View {
+        HStack(spacing: 10) {
+            StatusIndicator(status: status)
+                .frame(width: 16)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                Text(description)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.vertical, 2)
+    }
+
     // MARK: - Agents Tab
 
     @ViewBuilder
@@ -79,9 +143,9 @@ struct SettingsView: View {
                     Spacer()
                     HStack(spacing: 4) {
                         Circle()
-                            .fill(viewModel.hooksInstalled ? Color.green : Color.gray)
+                            .fill(viewModel.claudeHooksInstalled ? Color.green : Color.gray)
                             .frame(width: 8, height: 8)
-                        Text(viewModel.hooksInstalled ? "Configured" : "Not configured")
+                        Text(viewModel.claudeHooksInstalled ? "Configured" : "Not configured")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -96,13 +160,13 @@ struct SettingsView: View {
                 }
 
                 HStack {
-                    if viewModel.hooksInstalled {
+                    if viewModel.claudeHooksInstalled {
                         Button("Uninstall Hooks") {
-                            viewModel.uninstallHooks()
+                            viewModel.uninstallClaudeHooks()
                         }
                     } else {
                         Button("Install Hooks") {
-                            viewModel.installHooks()
+                            viewModel.installClaudeHooks()
                         }
                         .buttonStyle(.borderedProminent)
                     }
@@ -115,13 +179,36 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Gemini") {
+            Section("Gemini CLI") {
                 HStack {
                     Text("Status")
                     Spacer()
-                    Text("Coming Soon")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                    HStack(spacing: 4) {
+                        Circle()
+                            .fill(viewModel.geminiHooksInstalled ? Color.green : Color.gray)
+                            .frame(width: 8, height: 8)
+                        Text(viewModel.geminiHooksInstalled ? "Configured" : "Not configured")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                
+                HStack {
+                    if viewModel.geminiHooksInstalled {
+                        Button("Uninstall Hooks") {
+                            viewModel.uninstallGeminiHooks()
+                        }
+                    } else {
+                        Button("Install Hooks") {
+                            viewModel.installGeminiHooks()
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                    Spacer()
+                    
+                    Button("Test Connection") {
+                        viewModel.testConnection()
+                    }
                 }
             }
         }
