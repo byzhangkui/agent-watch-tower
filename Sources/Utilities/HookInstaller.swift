@@ -35,7 +35,7 @@ struct HookInstaller {
 
     // MARK: - Claude Code Hooks
 
-    private static func installClaudeHooks(port: UInt16) throws {
+    static func installClaudeHooks(port: UInt16 = Constants.httpPort) throws {
         var settings = try readExistingSettings(at: Constants.claudeSettingsPath)
 
         var hooks = settings["hooks"] as? [String: Any] ?? [:]
@@ -69,7 +69,7 @@ struct HookInstaller {
         try writeSettings(settings, to: Constants.claudeSettingsPath)
     }
 
-    private static func uninstallClaudeHooks(port: UInt16) throws {
+    static func uninstallClaudeHooks(port: UInt16 = Constants.httpPort) throws {
         var settings = try readExistingSettings(at: Constants.claudeSettingsPath)
 
         guard var hooks = settings["hooks"] as? [String: Any] else { return }
@@ -93,7 +93,7 @@ struct HookInstaller {
         try writeSettings(settings, to: Constants.claudeSettingsPath)
     }
 
-    private static func isClaudeInstalled(port: UInt16) -> Bool {
+    static func isClaudeInstalled(port: UInt16 = Constants.httpPort) -> Bool {
         guard let settings = try? readExistingSettings(at: Constants.claudeSettingsPath),
               let hooks = settings["hooks"] as? [String: Any] else {
             return false
@@ -115,7 +115,7 @@ struct HookInstaller {
 
     // MARK: - Gemini CLI Hooks
 
-    private static func installGeminiHooks(port: UInt16) throws {
+    static func installGeminiHooks(port: UInt16 = Constants.httpPort) throws {
         var settings = try readExistingSettings(at: Constants.geminiSettingsPath)
 
         var hooks = settings["hooks"] as? [String: Any] ?? [:]
@@ -151,7 +151,7 @@ struct HookInstaller {
         try writeSettings(settings, to: Constants.geminiSettingsPath)
     }
 
-    private static func uninstallGeminiHooks(port: UInt16) throws {
+    static func uninstallGeminiHooks(port: UInt16 = Constants.httpPort) throws {
         var settings = try readExistingSettings(at: Constants.geminiSettingsPath)
 
         guard var hooks = settings["hooks"] as? [String: Any] else { return }
@@ -175,7 +175,7 @@ struct HookInstaller {
         try writeSettings(settings, to: Constants.geminiSettingsPath)
     }
 
-    private static func isGeminiInstalled(port: UInt16) -> Bool {
+    static func isGeminiInstalled(port: UInt16 = Constants.httpPort) -> Bool {
         guard let settings = try? readExistingSettings(at: Constants.geminiSettingsPath),
               let hooks = settings["hooks"] as? [String: Any] else {
             return false

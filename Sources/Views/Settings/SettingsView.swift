@@ -143,9 +143,9 @@ struct SettingsView: View {
                     Spacer()
                     HStack(spacing: 4) {
                         Circle()
-                            .fill(viewModel.hooksInstalled ? Color.green : Color.gray)
+                            .fill(viewModel.claudeHooksInstalled ? Color.green : Color.gray)
                             .frame(width: 8, height: 8)
-                        Text(viewModel.hooksInstalled ? "Configured" : "Not configured")
+                        Text(viewModel.claudeHooksInstalled ? "Configured" : "Not configured")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -160,13 +160,13 @@ struct SettingsView: View {
                 }
 
                 HStack {
-                    if viewModel.hooksInstalled {
+                    if viewModel.claudeHooksInstalled {
                         Button("Uninstall Hooks") {
-                            viewModel.uninstallHooks()
+                            viewModel.uninstallClaudeHooks()
                         }
                     } else {
                         Button("Install Hooks") {
-                            viewModel.installHooks()
+                            viewModel.installClaudeHooks()
                         }
                         .buttonStyle(.borderedProminent)
                     }
@@ -179,13 +179,32 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Gemini") {
+            Section("Gemini CLI") {
                 HStack {
                     Text("Status")
                     Spacer()
-                    Text("Coming Soon")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                    HStack(spacing: 4) {
+                        Circle()
+                            .fill(viewModel.geminiHooksInstalled ? Color.green : Color.gray)
+                            .frame(width: 8, height: 8)
+                        Text(viewModel.geminiHooksInstalled ? "Configured" : "Not configured")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                
+                HStack {
+                    if viewModel.geminiHooksInstalled {
+                        Button("Uninstall Hooks") {
+                            viewModel.uninstallGeminiHooks()
+                        }
+                    } else {
+                        Button("Install Hooks") {
+                            viewModel.installGeminiHooks()
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                    Spacer()
                 }
             }
         }

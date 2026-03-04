@@ -5,7 +5,8 @@ import Observation
 @Observable
 @MainActor
 final class SettingsViewModel {
-    var hooksInstalled: Bool = false
+    var claudeHooksInstalled: Bool = false
+    var geminiHooksInstalled: Bool = false
     var serverRunning: Bool = false
     var retentionDays: Int = Constants.defaultRetentionDays
     var showInstallAlert: Bool = false
@@ -16,29 +17,54 @@ final class SettingsViewModel {
     }
 
     func checkHookStatus() {
-        hooksInstalled = HookInstaller.isInstalled()
+        claudeHooksInstalled = HookInstaller.isClaudeInstalled()
+        geminiHooksInstalled = HookInstaller.isGeminiInstalled()
     }
 
-    func installHooks() {
+    func installClaudeHooks() {
         do {
-            try HookInstaller.install()
-            hooksInstalled = true
-            alertMessage = "Hooks installed successfully."
+            try HookInstaller.installClaudeHooks(port: Constants.httpPort)
+            claudeHooksInstalled = true
+            alertMessage = "Claude Code hooks installed successfully."
             showInstallAlert = true
         } catch {
-            alertMessage = "Failed to install hooks: \(error.localizedDescription)"
+            alertMessage = "Failed to install Claude Code hooks: \(error.localizedDescription)"
             showInstallAlert = true
         }
     }
 
-    func uninstallHooks() {
+    func uninstallClaudeHooks() {
         do {
-            try HookInstaller.uninstall()
-            hooksInstalled = false
-            alertMessage = "Hooks removed successfully."
+            try HookInstaller.uninstallClaudeHooks(port: Constants.httpPort)
+            claudeHooksInstalled = false
+            alertMessage = "Claude Code hooks removed successfully."
             showInstallAlert = true
         } catch {
-            alertMessage = "Failed to remove hooks: \(error.localizedDescription)"
+            alertMessage = "Failed to remove Claude Code hooks: \(error.localizedDescription)"
+            showInstallAlert = true
+        }
+    }
+    
+    func installGeminiHooks() {
+        do {
+            try HookInstaller.installGeminiHooks(port: Constants.httpPort)
+            geminiHooksInstalled = true
+            alertMessage = "Gemini CLI hooks installed successfully."
+            showInstallAlert = true
+        } catch {
+            alertMessage = "Failed to install Gemini CLI hooks: \(error.localizedDescription)"
+            showInstallAlert = true
+        }
+    }
+
+    func uninstallGeminiHooks() {
+        do {
+            try HookInstaller.uninstallGeminiHooks(port: Constants.httpPort)
+            geminiHooksInstalled = false
+            alertMessage = "Gemini CLI hooks removed successfully."
+            showInstallAlert = true
+        } catch {
+            alertMessage = "Failed to remove Gemini CLI hooks: \(error.localizedDescription)"
             showInstallAlert = true
         }
     }
