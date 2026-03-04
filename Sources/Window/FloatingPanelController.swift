@@ -12,6 +12,7 @@ final class FloatingPanelController {
     private static let positionXKey = "FloatingPanel.positionX"
     private static let positionYKey = "FloatingPanel.positionY"
     private static let hasSavedPositionKey = "FloatingPanel.hasSavedPosition"
+    private static let isVisibleKey = "FloatingPanel.isVisible"
 
     init(contentViewProvider: @escaping () -> NSView) {
         self.contentViewProvider = contentViewProvider
@@ -28,10 +29,18 @@ final class FloatingPanelController {
         }
     }
 
+    /// Restore panel state from previous launch. Call this after initialization.
+    func restoreState() {
+        if UserDefaults.standard.bool(forKey: Self.isVisibleKey) {
+            show()
+        }
+    }
+
     /// Show the floating panel, creating it if needed.
     func show() {
         if let panel = panel {
             panel.orderFrontRegardless()
+            UserDefaults.standard.set(true, forKey: Self.isVisibleKey)
             return
         }
 
@@ -70,6 +79,13 @@ final class FloatingPanelController {
         panel.contentView = contentView
         panel.orderFrontRegardless()
         self.panel = panel
+        
+        // Ensure the restored position is visible on the current screens, otherwise reset
+        if !isFrameVisibleOnAnyScreen(panel.frame) {
+            panel.setFrameOrigin(defaultOrigin(for: panel.frame.size))
+        }
+
+        UserDefaults.standard.set(true, forKey: Self.isVisibleKey)
 
         // Save position when the window moves
         NotificationCenter.default.addObserver(
@@ -78,12 +94,21 @@ final class FloatingPanelController {
             name: NSWindow.didMoveNotification,
             object: panel
         )
+        
+        // Listen for close to update visibility state
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(windowWillClose),
+            name: NSWindow.willCloseNotification,
+            object: panel
+        )
     }
 
     /// Hide the panel without destroying it (preserves state for quick reshow).
     func hide() {
         savePosition()
         panel?.orderOut(nil)
+        UserDefaults.standard.set(false, forKey: Self.isVisibleKey)
     }
 
     /// Destroy the panel (call on app termination or full teardown).
@@ -91,6 +116,7 @@ final class FloatingPanelController {
         savePosition()
         if let panel {
             NotificationCenter.default.removeObserver(self, name: NSWindow.didMoveNotification, object: panel)
+            NotificationCenter.default.removeObserver(self, name: NSWindow.willCloseNotification, object: panel)
             panel.close()
         }
         panel = nil
@@ -100,6 +126,10 @@ final class FloatingPanelController {
 
     @objc private func windowDidMove(_ notification: Notification) {
         savePosition()
+    }
+    
+    @objc private func windowWillClose(_ notification: Notification) {
+        UserDefaults.standard.set(false, forKey: Self.isVisibleKey)
     }
 
     private func savePosition() {
@@ -116,13 +146,20 @@ final class FloatingPanelController {
         return NSPoint(x: x, y: y)
     }
 
-    /// Default position: top-right corner of the screen.
+    /// Default position: top-right corner of the primary screen.
     private func defaultOrigin(for size: NSSize) -> NSPoint {
         let screenFrame = NSScreen.main?.visibleFrame ?? .zero
         return NSPoint(
             x: screenFrame.maxX - size.width - 20,
             y: screenFrame.maxY - size.height - 20
         )
+    }
+    
+    /// Checks if the given frame intersects with any of the currently available screens.
+    private func isFrameVisibleOnAnyScreen(_ frame: NSRect) -> Bool {
+        return NSScreen.screens.contains { screen in
+            screen.visibleFrame.intersects(frame)
+        }
     }
 }
 #endif

@@ -95,6 +95,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 9. Load initial data
         sessionListVM.reload()
         updateStatusBarIcon()
+        
+        // 10. Restore floating panel state
+        floatingPanelController.restoreState()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
