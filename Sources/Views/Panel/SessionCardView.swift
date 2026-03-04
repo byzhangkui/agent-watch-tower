@@ -59,7 +59,7 @@ struct SessionCardView: View {
                         Button(action: onRemove) {
                             Image(systemName: "xmark")
                                 .font(.system(size: 12, weight: .bold))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.white.opacity(0.5))
                         }
                         .buttonStyle(.plain)
                         .padding(.leading, 4)
@@ -71,7 +71,7 @@ struct SessionCardView: View {
                 // Row 2: Project directory
                 Text(session.projectName)
                     .font(.system(size: 13, weight: .regular))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.white.opacity(0.7))
                     .lineLimit(1)
 
                 // Row 3: Current action
@@ -82,7 +82,7 @@ struct SessionCardView: View {
                         Text("Completed")
                             .font(.system(size: 13, design: .monospaced))
                     }
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.white.opacity(0.5))
                 } else if let action = session.currentAction {
                     HStack(spacing: 6) {
                         if session.status == .running {
@@ -91,12 +91,12 @@ struct SessionCardView: View {
                                 .foregroundStyle(.green)
                             Text(action)
                                 .font(.system(size: 13, design: .monospaced))
-                                .foregroundStyle(.primary)
+                                .foregroundStyle(.white)
                                 .lineLimit(1)
                         } else {
                             Text(action)
                                 .font(.system(size: 13, design: .monospaced))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.white.opacity(0.7))
                                 .lineLimit(1)
                         }
                     }
@@ -150,16 +150,15 @@ struct SessionCardView: View {
             Text(text)
                 .font(.system(size: 13))
         }
-        .foregroundStyle(.secondary)
+        .foregroundStyle(Color.white.opacity(0.5))
     }
 
     private var agentColor: Color {
-        let isDark = colorScheme == .dark
         switch session.agentType {
         case .claudeCode:
-            return isDark ? Color(hex: "#F0A785") : Color(hex: "#C66A45") // Coral/Apricot
+            return Color(hex: "#FF9D7E") // Claude Coral
         case .gemini:
-            return isDark ? Color(hex: "#8EEDEB") : Color(hex: "#2563EB") // Cyan/Light Blue
+            return Color(hex: "#8CBFFF") // Gemini Cyan
         }
     }
 }
