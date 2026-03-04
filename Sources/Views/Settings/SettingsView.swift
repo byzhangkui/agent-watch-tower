@@ -205,6 +205,10 @@ struct SettingsView: View {
                         .buttonStyle(.borderedProminent)
                     }
                     Spacer()
+                    
+                    Button("Test Connection") {
+                        viewModel.testConnection()
+                    }
                 }
             }
         }
