@@ -82,8 +82,18 @@ struct ClaudeCodeAdapter: AgentAdapter {
         let rawJson = try? JSONEncoder().encode(payload)
         let rawString = rawJson.flatMap { String(data: $0, encoding: .utf8) }
 
+        // Use toolUseId with event-type suffix to avoid primary key collision
+        // between PreToolUse and PostToolUse for the same tool call
+        let eventId: String
+        if let toolUseId = payload.toolUseId {
+            let suffix = payload.hookEventName == "PostToolUse" ? "-post" : "-pre"
+            eventId = toolUseId + suffix
+        } else {
+            eventId = UUID().uuidString
+        }
+
         return AgentEvent(
-            id: payload.toolUseId ?? UUID().uuidString,
+            id: eventId,
             sessionId: payload.sessionId,
             timestamp: Date().timeIntervalSince1970,
             eventType: eventType,
@@ -129,6 +139,13 @@ struct ClaudeCodeAdapter: AgentAdapter {
                 session.updatedAt = now
 
             case "SubagentStop":
+                // A subagent ending does NOT mean the parent session ended.
+                // If a prior Stop event incorrectly marked this session as completed, restore it.
+                if session.status == .completed {
+                    session.status = .running
+                    session.endedAt = nil
+                }
+                session.currentAction = nil
                 session.updatedAt = now
 
             case "UserPromptSubmit":

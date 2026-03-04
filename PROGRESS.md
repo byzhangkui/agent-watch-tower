@@ -1,5 +1,28 @@
 # Progress Record
 
+## [2026-03-04] PostToolUse 事件丢失 — 主键冲突 bug
+
+- **遇到了什么问题：**
+  Session 详情页的 RECENT EVENTS 列表停止更新，新的工具调用事件没有被记录。Session 状态（Running / current action）正常更新，但 events 表没有新数据。
+
+- **如何解决的：**
+  1. **根因**：`ClaudeCodeAdapter.parseEvent()` 中 `id` 取值为 `payload.toolUseId ?? UUID().uuidString`。`PreToolUse` 和 `PostToolUse` 共享同一个 `toolUseId`，导致 PostToolUse 的 INSERT 因主键冲突失败。而 `EventProcessor` 用 `try?` 吞掉了错误，完全无感知。
+  2. **修复**：为 event id 添加事件类型后缀（`-pre` / `-post`），确保 PreToolUse 和 PostToolUse 生成不同的主键。
+  3. **错误可见性**：将 `try? eventStore.insert(event)` 改为 `do/catch`，失败时 print 错误信息，避免再次被静默吞掉。
+
+- **以后如何避免：**
+  - 当多个不同的业务事件共享同一个外部 ID（如 toolUseId）时，**不能直接用它做主键**，必须附加区分后缀或生成独立 ID。
+  - **永远不要用 `try?` 吃掉写入操作的错误**，至少要打印日志，否则数据丢失时完全无法排查。
+
+## [2026-03-04] 浮窗精简 + 图标替换 + Status Guide
+
+- **做了什么：**
+  1. **去掉浮窗标题栏**：FloatingPanelController 使用 `.fullSizeContentView` + `titlebarAppearsTransparent` + `titleVisibility = .hidden`，仅保留标准关闭按钮。
+  2. **App 图标替换**：将 `icon-concept-3.svg` 通过 cairosvg + iconutil 转换为 `Resources/AppIcon.icns`。
+  3. **浮窗去掉 input/output**：SessionCardView 新增 `showTokenUsage` 参数，CompactSessionListView 传 `false`。
+  4. **浮窗去掉今日统计**：CompactSessionListView 移除 DailySummaryView。
+  5. **Settings 新增 Status Guide 标签页**：列出所有 6 种状态指示器的颜色含义。
+
 ## [2026-03-04] 用 Pin 替换为独立置顶窗口 + waitingForUser 状态提醒
 
 - **做了什么：**

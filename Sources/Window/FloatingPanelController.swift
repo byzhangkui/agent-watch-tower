@@ -3,6 +3,7 @@ import AppKit
 import SwiftUI
 
 /// Manages the always-on-top floating panel (NSPanel) as an independent window.
+/// Uses a transparent titlebar with standard close button for a minimal appearance.
 final class FloatingPanelController {
     private var panel: NSPanel?
     private let contentViewProvider: () -> NSView
@@ -36,7 +37,6 @@ final class FloatingPanelController {
 
         let contentView = contentViewProvider()
 
-        // Let the content determine its intrinsic size
         let fittingSize = contentView.fittingSize
         let width = max(fittingSize.width, Constants.panelDefaultWidth)
         let height = max(fittingSize.height, Constants.panelMinHeight)
@@ -46,17 +46,23 @@ final class FloatingPanelController {
 
         let panel = NSPanel(
             contentRect: frame,
-            styleMask: [.titled, .closable, .resizable, .nonactivatingPanel],
+            styleMask: [.titled, .closable, .resizable, .fullSizeContentView, .nonactivatingPanel],
             backing: .buffered,
             defer: false
         )
+        // Transparent titlebar — only the close button remains visible
+        panel.titlebarAppearsTransparent = true
+        panel.titleVisibility = .hidden
         panel.title = Constants.appName
+
         panel.level = .floating
         panel.isFloatingPanel = true
         panel.hidesOnDeactivate = false
         panel.becomesKeyOnlyIfNeeded = true
         panel.isMovableByWindowBackground = true
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        panel.appearance = NSAppearance(named: .darkAqua)
+        panel.backgroundColor = NSColor(red: 0.1, green: 0.1, blue: 0.11, alpha: 1.0)
 
         panel.minSize = NSSize(width: Constants.panelMinWidth, height: Constants.panelMinHeight)
         panel.maxSize = NSSize(width: Constants.panelMaxWidth, height: Constants.panelMaxHeight)

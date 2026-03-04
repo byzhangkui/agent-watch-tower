@@ -89,7 +89,11 @@ actor EventProcessor {
                 }
             }
 
-            try? eventStore.insert(event)
+            do {
+                try eventStore.insert(event)
+            } catch {
+                print("EventProcessor: failed to insert event \(event.id): \(error)")
+            }
         }
 
         // 5. Notify UI (post to main thread)

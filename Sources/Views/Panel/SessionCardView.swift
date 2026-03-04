@@ -4,6 +4,7 @@ import SwiftUI
 /// A compact card displaying a single agent session's status.
 struct SessionCardView: View {
     let session: AgentSession
+    var showTokenUsage: Bool = true
 
     @State private var alertPulse = false
 
@@ -81,7 +82,7 @@ struct SessionCardView: View {
             }
 
             // Row 5: Token usage
-            if session.totalTokens > 0 {
+            if showTokenUsage, session.totalTokens > 0 {
                 TokenBadgeView(
                     inputTokens: session.tokensInput ?? 0,
                     outputTokens: session.tokensOutput ?? 0
