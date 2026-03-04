@@ -41,6 +41,7 @@ struct PanelRootView: View {
                 minHeight: Constants.panelMinHeight,
                 maxHeight: Constants.panelMaxHeight
             )
+            .background(Color(red: 40/255.0, green: 40/255.0, blue: 40/255.0))
         }
     }
 }

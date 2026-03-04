@@ -37,6 +37,8 @@ final class PopoverManager {
         // Ensure popover window doesn't activate the app
         if let window = popover.contentViewController?.view.window {
             window.level = .floating
+            window.isOpaque = true
+            window.backgroundColor = NSColor(red: 40/255.0, green: 40/255.0, blue: 40/255.0, alpha: 1.0)
         }
     }
 
