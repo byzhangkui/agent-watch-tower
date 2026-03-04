@@ -22,7 +22,7 @@ struct SessionCardView: View {
                 // Row 1: Agent type + duration
                 HStack(alignment: .top) {
                     Text(session.agentType.displayName)
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(agentColor)
 
                     Spacer()
