@@ -55,6 +55,15 @@ final class SessionListViewModel {
         }
     }
 
+    func delete(session: AgentSession) {
+        do {
+            try sessionStore.delete(session)
+            reload()
+        } catch {
+            print("Failed to delete session: \(error)")
+        }
+    }
+
     var activeSessions: [AgentSession] {
         sessions.filter { $0.isActive }
     }

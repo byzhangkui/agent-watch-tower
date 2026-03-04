@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Agent Watch Tower - UI Concept</title>
+<style>
+  :root {
+    /* Lighter visual weight for dark mode */
+    --bg-color: rgba(30, 30, 32, 0.75);
+    --border-color: rgba(255, 255, 255, 0.08);
+    --text-primary: #e5e5ea;
+    --text-secondary: #8e8e93;
+    --accent-purple: #bf5af2;
+    --status-active: #32d74b;
+    --status-idle: #636366;
+    --status-complete: #0a84ff;
+  }
+  
+  body {
+    background-color: #000;
+    /* Simulated wallpaper background to show off translucency */
+    background-image: radial-gradient(circle at top right, #2a2a4a, #000 50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text-primary);
+  }
+
+  .floating-window {
+    width: 340px;
+    background: var(--bg-color);
+    /* macOS standard vibrancy blur effect */
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    border-radius: 12px;
+    border: 0.5px solid rgba(255,255,255,0.15);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,0,0,0.8);
+    overflow: hidden;
+  }
+
+  .header {
+    height: 38px;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    border-bottom: 0.5px solid var(--border-color);
+    /* Make the top bar draggable area slightly different if needed, here just transparent */
+    background: rgba(0,0,0,0.1); 
+  }
+
+  .traffic-lights {
+    display: flex;
+    gap: 8px;
+  }
+
+  .dot { 
+    width: 12px; 
+    height: 12px; 
+    border-radius: 50%; 
+    background: #3a3a3c; /* Inactive look, change to colors for active */
+  }
+
+  .list-container {
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .list-item {
+    padding: 10px 14px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    /* Removed the heavy solid card background */
+    background: transparent;
+    transition: background 0.15s ease;
+  }
+
+  .list-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .agent-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .status-indicator { 
+    width: 8px; 
+    height: 8px; 
+    border-radius: 50%; 
+  }
+  .status-indicator.active { background: var(--status-active); box-shadow: 0 0 6px rgba(50, 215, 75, 0.6); }
+  .status-indicator.idle { background: var(--status-idle); }
+  .status-indicator.complete { background: var(--status-complete); }
+
+  .agent-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-purple);
+    letter-spacing: -0.2px;
+  }
+
+  .time {
+    font-size: 12px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .project-name {
+    font-size: 13px;
+    color: var(--text-primary);
+    padding-left: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0.9;
+  }
+
+  .action-row {
+    font-size: 12px;
+    color: var(--text-secondary);
+    padding-left: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  .action-row.active {
+    color: var(--text-primary);
+  }
+
+  .action-row.active .icon {
+    color: var(--status-active);
+  }
+  
+  .action-row .icon {
+    display: flex;
+    align-items: center;
+  }
+
+  .divider {
+    height: 0.5px;
+    background: var(--border-color);
+    margin: 2px 14px;
+  }
+
+</style>
+</head>
+<body>
+
+<div class="floating-window">
+  <div class="header">
+    <div class="traffic-lights">
+      <!-- Dimmed traffic lights to match screenshot's inactive window state -->
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+  </div>
+  
+  <div class="list-container">
+    
+    <!-- Item 1 -->
+    <div class="list-item">
+      <div class="item-header">
+        <div class="agent-info">
+          <div class="status-indicator active"></div>
+          <div class="agent-name">claude-code</div>
+        </div>
+        <div class="time">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          18m
+        </div>
+      </div>
+      <div class="project-name">agent-watch-tower</div>
+      <div class="action-row active">
+        <span class="icon">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        </span>
+        ExitPlanMode
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Item 2 -->
+    <div class="list-item">
+      <div class="item-header">
+        <div class="agent-info">
+          <div class="status-indicator idle"></div>
+          <div class="agent-name">claude-code</div>
+        </div>
+        <div class="time">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          9h 42m
+        </div>
+      </div>
+      <div class="project-name">webmail-gemini</div>
+      <div class="action-row">
+        AskUserQuestion
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Item 3 -->
+    <div class="list-item">
+      <div class="item-header">
+        <div class="agent-info">
+          <div class="status-indicator complete"></div>
+          <div class="agent-name">claude-code</div>
+        </div>
+        <div class="time">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          9h 54m
+        </div>
+      </div>
+      <div class="project-name">webmail-gemini-3</div>
+      <div class="action-row">
+        <span class="icon">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </span>
+        Completed
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <!-- macOS drop shadow for the squircle -->
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="15" stdDeviation="20" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+    
+    <!-- Background Gradient (Deep Glass/Obsidian Theme) -->
+    <linearGradient id="bg-grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1c1c1e" />
+      <stop offset="50%" stop-color="#2c2c2e" />
+      <stop offset="100%" stop-color="#121212" />
+    </linearGradient>
+
+    <!-- Glowing Node Gradients -->
+    <radialGradient id="glow-center" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#32d74b" stop-opacity="1"/>
+      <stop offset="30%" stop-color="#32d74b" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#32d74b" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="glow-outer" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#32d74b" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#32d74b" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- macOS Big Sur+ Squircle Approximation -->
+    <path id="squircle" d="M512,0 
+             C896,0 1024,128 1024,512 
+             C1024,896 896,1024 512,1024 
+             C128,1024 0,896 0,512 
+             C0,128 128,0 512,0 Z" />
+  </defs>
+
+  <!-- 1. Base App Icon Background -->
+  <use href="#squircle" fill="url(#bg-grad2)" filter="url(#shadow)" />
+  
+  <!-- Subtle top highlight for glass effect -->
+  <path d="M512,4 
+           C896,4 1020,132 1020,512 
+           C1020,400 896,300 512,300 
+           C128,300 4,400 4,512 
+           C4,132 128,4 512,4 Z" 
+        fill="#ffffff" fill-opacity="0.05" />
+
+  <!-- Inner border for a subtle 3D glass edge -->
+  <use href="#squircle" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6" />
+
+  <!-- 2. The Glowing Node Design -->
+  
+  <!-- Outer aura ring 1 -->
+  <circle cx="512" cy="512" r="340" fill="none" stroke="#ffffff" stroke-width="2" stroke-opacity="0.1" />
+  
+  <!-- Outer aura ring 2 -->
+  <circle cx="512" cy="512" r="260" fill="none" stroke="#ffffff" stroke-width="4" stroke-opacity="0.15" />
+
+  <!-- Connecting Lines (Network representation) -->
+  <g stroke="#ffffff" stroke-width="4" stroke-opacity="0.2" stroke-linecap="round">
+    <line x1="512" y1="172" x2="512" y2="252" />
+    <line x1="512" y1="772" x2="512" y2="852" />
+    <line x1="172" y1="512" x2="252" y2="512" />
+    <line x1="772" y1="512" x2="852" y2="512" />
+    <line x1="271" y1="271" x2="328" y2="328" />
+    <line x1="753" y1="753" x2="696" y2="696" />
+    <line x1="271" y1="753" x2="328" y2="696" />
+    <line x1="753" y1="271" x2="696" y2="328" />
+  </g>
+
+  <!-- Large soft glow -->
+  <circle cx="512" cy="512" r="400" fill="url(#glow-outer)" />
+  
+  <!-- Medium concentrated glow -->
+  <circle cx="512" cy="512" r="200" fill="url(#glow-center)" />
+  
+  <!-- Solid inner core -->
+  <circle cx="512" cy="512" r="80" fill="#ffffff" filter="drop-shadow(0 0 20px #ffffff)" />
+  
+  <!-- Central pupil/dot -->
+  <circle cx="512" cy="512" r="30" fill="#32d74b" />
+
+</svg>

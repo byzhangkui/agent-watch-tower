@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menu Bar Icon Preview (Light & Dark Mode)</title>
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+
+  .preview-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 20px;
+    position: relative;
+  }
+
+  .light-mode {
+    background-color: #f6f6f6;
+    color: #000;
+  }
+
+  .dark-mode {
+    background-color: #1e1e1e;
+    color: #fff;
+  }
+  
+  .dark-mode::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    /* simulated macos dark mode wallpaper bleed */
+    background: radial-gradient(circle at top right, rgba(0, 100, 255, 0.1), transparent 50%);
+    pointer-events: none;
+  }
+
+  .menu-bar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 16px;
+    height: 24px; /* Native macOS menu bar height */
+    border-radius: 4px;
+    width: 300px;
+    font-size: 13px;
+    font-weight: 500;
+    gap: 12px;
+    /* simulate blur */
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .light-mode .menu-bar {
+    background: rgba(255, 255, 255, 0.5);
+    border-bottom: 0.5px solid rgba(0,0,0,0.1);
+    color: #000;
+  }
+
+  .dark-mode .menu-bar {
+    background: rgba(30, 30, 30, 0.4);
+    border-bottom: 0.5px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.9);
+  }
+
+  /* 
+    Crucial part: The Icon SVG 
+    Using 'currentColor' allows the SVG to inherit the text color of its parent container.
+    This is exactly how macOS Template Images work.
+  */
+  .menu-icon {
+    width: 16px; /* standard icon size in menu bar */
+    height: 16px;
+    fill: currentColor;
+    stroke: currentColor;
+  }
+
+  .status-blip {
+    fill: currentColor; 
+  }
+  
+  /* Simulating an 'Active' state where the blip overrides the template color */
+  .active-state .status-blip {
+    fill: #34c759; /* macOS native green */
+  }
+
+  .label {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    opacity: 0.5;
+  }
+  
+  .controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 40px;
+    z-index: 10;
+  }
+  
+  button {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid currentColor;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font-size: 12px;
+  }
+
+</style>
+</head>
+<body>
+
+  <!-- LIGHT MODE PREVIEW -->
+  <div class="preview-container light-mode">
+    <div class="label">Light Mode Menu Bar</div>
+    
+    <div class="menu-bar">
+      <!-- Standard macOS icons for context -->
+      <span>100%</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
+      
+      <!-- OUR AGENT WATCH ICON -->
+      <svg class="menu-icon icon-target" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <!-- Outer Orbit -->
+        <circle cx="50" cy="50" r="42" fill="none" stroke-width="8" stroke-dasharray="24 16" />
+        <!-- Inner Orbit -->
+        <circle cx="50" cy="50" r="30" fill="none" stroke-width="4" opacity="0.4" />
+        <!-- AI Agent Sparkle -->
+        <path d="M 50 18 C 50 36 36 50 18 50 C 36 50 50 64 50 82 C 50 64 64 50 82 50 C 64 50 50 36 50 18 Z" stroke="none"/>
+        <!-- Status Blip -->
+        <circle class="status-blip" cx="85" cy="15" r="10" stroke="none" />
+      </svg>
+      
+      <span>Mon 9:41 AM</span>
+    </div>
+  </div>
+
+  <!-- DARK MODE PREVIEW -->
+  <div class="preview-container dark-mode">
+    <div class="label">Dark Mode Menu Bar</div>
+    
+    <div class="controls">
+      <button onclick="document.querySelectorAll('.icon-target').forEach(el => el.classList.toggle('active-state'))">
+        Toggle 'Active/Running' State (Green Blip)
+      </button>
+    </div>
+
+    <div class="menu-bar">
+      <!-- Standard macOS icons for context -->
+      <span>100%</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
+      
+      <!-- OUR AGENT WATCH ICON -->
+      <svg class="menu-icon icon-target" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <!-- Outer Orbit -->
+        <circle cx="50" cy="50" r="42" fill="none" stroke-width="8" stroke-dasharray="24 16" />
+        <!-- Inner Orbit -->
+        <circle cx="50" cy="50" r="30" fill="none" stroke-width="4" opacity="0.4" />
+        <!-- AI Agent Sparkle -->
+        <path d="M 50 18 C 50 36 36 50 18 50 C 36 50 50 64 50 82 C 50 64 64 50 82 50 C 64 50 50 36 50 18 Z" stroke="none"/>
+        <!-- Status Blip -->
+        <circle class="status-blip" cx="85" cy="15" r="10" stroke="none" />
+      </svg>
+      
+      <span>Mon 9:41 AM</span>
+    </div>
+  </div>
+
+</body>
+</html>

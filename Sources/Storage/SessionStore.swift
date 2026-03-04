@@ -16,6 +16,12 @@ struct SessionStore {
         }
     }
 
+    func delete(_ session: AgentSession) throws {
+        try db.write { db in
+            _ = try session.delete(db)
+        }
+    }
+
     /// All sessions that are currently active (running, thinking, waiting)
     func activeSessions() throws -> [AgentSession] {
         try db.read { db in

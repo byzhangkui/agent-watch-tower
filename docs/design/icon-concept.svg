@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <!-- macOS drop shadow for the squircle -->
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="15" stdDeviation="20" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+    
+    <!-- Background Gradient (Dark Nord Theme) -->
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3b4252" />
+      <stop offset="100%" stop-color="#2e3440" />
+    </linearGradient>
+
+    <!-- macOS Big Sur+ Squircle Approximation -->
+    <path id="squircle" d="M512,0 
+             C896,0 1024,128 1024,512 
+             C1024,896 896,1024 512,1024 
+             C128,1024 0,896 0,512 
+             C0,128 128,0 512,0 Z" />
+  </defs>
+
+  <!-- 1. Base App Icon Background -->
+  <use href="#squircle" fill="url(#bg-grad)" filter="url(#shadow)" />
+  
+  <!-- Inner border for a subtle 3D glass edge -->
+  <use href="#squircle" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" />
+
+  <!-- 2. The "Watch Tower" Radar / Monitoring Design -->
+  
+  <!-- Outer dotted orbit -->
+  <circle cx="512" cy="512" r="300" fill="none" stroke="#88c0d0" stroke-width="4" stroke-opacity="0.3" stroke-dasharray="20 15" />
+  
+  <!-- Middle solid orbit -->
+  <circle cx="512" cy="512" r="220" fill="none" stroke="#88c0d0" stroke-width="8" stroke-opacity="0.5" />
+  
+  <!-- Inner thick ring -->
+  <circle cx="512" cy="512" r="140" fill="none" stroke="#81a1c1" stroke-width="16" />
+
+  <!-- Center Glowing Core (The "Agent") -->
+  <circle cx="512" cy="512" r="70" fill="#a3be8c" filter="drop-shadow(0 0 40px #a3be8c)" />
+
+  <!-- Radar sweep effect -->
+  <path d="M512,512 L512,212" stroke="#a3be8c" stroke-width="12" stroke-linecap="round" filter="drop-shadow(0 0 15px #a3be8c)" />
+  <path d="M512,512 A300,300 0 0,1 724.1,300 L512,512 Z" fill="#a3be8c" fill-opacity="0.1" />
+
+  <!-- 3. Stylized "Status Pulse" at the bottom -->
+  <path d="M 300 780 L 400 780 L 450 680 L 550 880 L 600 780 L 724 780" 
+        fill="none" stroke="#ebcb8b" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"
+        filter="drop-shadow(0 5px 10px rgba(0,0,0,0.5))" />
+</svg>

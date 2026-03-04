@@ -11,22 +11,33 @@ struct CompactSessionListView: View {
             emptyState
         } else {
             ScrollView {
-                LazyVStack(spacing: 12) {
+                LazyVStack(spacing: 0) {
                     ForEach(viewModel.activeSessions) { session in
-                        SessionCardView(session: session, showTokenUsage: false)
+                        SessionCardView(session: session, showTokenUsage: false) {
+                            viewModel.delete(session: session)
+                        }
                             .transition(.asymmetric(
                                 insertion: .move(edge: .top).combined(with: .opacity),
                                 removal: .opacity.combined(with: .scale(scale: 0.95))
                             ))
+                        if session.id != viewModel.activeSessions.last?.id || !viewModel.completedSessions.isEmpty {
+                            Divider()
+                                .padding(.horizontal, 16)
+                        }
                     }
 
                     ForEach(viewModel.completedSessions) { session in
-                        SessionCardView(session: session, showTokenUsage: false)
+                        SessionCardView(session: session, showTokenUsage: false) {
+                            viewModel.delete(session: session)
+                        }
                             .opacity(0.6)
+                        if session.id != viewModel.completedSessions.last?.id {
+                            Divider()
+                                .padding(.horizontal, 16)
+                        }
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 36) // Space for traffic light buttons
+                .padding(.top, 8)
                 .padding(.bottom, 12)
                 .animation(.spring(duration: 0.3), value: viewModel.sessions)
             }

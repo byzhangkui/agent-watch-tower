@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <!-- macOS drop shadow for the squircle -->
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="15" stdDeviation="20" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+    
+    <!-- Background Gradient (Silver/Metal Dashboard) -->
+    <linearGradient id="bg-grad-metal" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e5e5ea" />
+      <stop offset="100%" stop-color="#c7c7cc" />
+    </linearGradient>
+
+    <!-- Screen Gradient -->
+    <linearGradient id="screen-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e1e1e" />
+      <stop offset="100%" stop-color="#0d0d0d" />
+    </linearGradient>
+
+    <!-- AI Gradient (Purple to Cyan) -->
+    <linearGradient id="ai-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#bf5af2" />
+      <stop offset="50%" stop-color="#5e5ce6" />
+      <stop offset="100%" stop-color="#64d2ff" />
+    </linearGradient>
+
+    <!-- Glow Filters -->
+    <filter id="glow-green">
+      <feGaussianBlur stdDeviation="15" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="glow-ai">
+      <feGaussianBlur stdDeviation="15" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- macOS Big Sur+ Squircle Approximation -->
+    <path id="squircle" d="M512,0 
+             C896,0 1024,128 1024,512 
+             C1024,896 896,1024 512,1024 
+             C128,1024 0,896 0,512 
+             C0,128 128,0 512,0 Z" />
+  </defs>
+
+  <!-- 1. Base App Icon Background (Metal Casing) -->
+  <use href="#squircle" fill="url(#bg-grad-metal)" filter="url(#shadow)" />
+  
+  <!-- Outer metal rim highlight -->
+  <use href="#squircle" fill="none" stroke="#ffffff" stroke-width="12" stroke-opacity="0.6" />
+  <!-- Inner metal rim shadow -->
+  <use href="#squircle" fill="none" stroke="#8e8e93" stroke-width="12" stroke-opacity="0.4" transform="scale(0.98) translate(10.24, 10.24)" />
+
+  <!-- 2. The Dashboard Screen Area -->
+  <rect x="150" y="150" width="724" height="450" rx="40" ry="40" fill="url(#screen-grad)" stroke="#3a3a3c" stroke-width="8" filter="drop-shadow(0 10px 15px rgba(0,0,0,0.5) inset)" />
+  
+  <!-- Subtle Screen Grid for terminal texture -->
+  <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+    <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#ffffff" stroke-width="1" stroke-opacity="0.05"/>
+  </pattern>
+  <rect x="150" y="150" width="724" height="450" rx="40" ry="40" fill="url(#grid)" />
+
+  <!-- 
+       Abstract AI & Terminal Elements 
+  -->
+  
+  <!-- Terminal Prompt (Green) -->
+  <path d="M 230,280 L 330,375 L 230,470" fill="none" stroke="#32d74b" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow-green)" />
+  
+  <!-- Monitoring Orbit / Radar Ring around the AI Agent -->
+  <circle cx="540" cy="375" r="140" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="4" stroke-dasharray="10 15" />
+  <circle cx="540" cy="375" r="90" fill="none" stroke="#ffffff" stroke-opacity="0.05" stroke-width="2" />
+  <path d="M 540,235 A 140 140 0 0 1 680 375" fill="none" stroke="#32d74b" stroke-width="6" stroke-linecap="round" filter="url(#glow-green)" />
+
+  <!-- The AI Agent (Large Sparkle) -->
+  <path d="M 540,215 
+           Q 540,375 700,375 
+           Q 540,375 540,535 
+           Q 540,375 380,375 
+           Q 540,375 540,215 Z" 
+        fill="url(#ai-grad)" filter="url(#glow-ai)" />
+        
+  <!-- Secondary AI Sparkle -->
+  <path d="M 720,190 
+           Q 720,250 780,250 
+           Q 720,250 720,310 
+           Q 720,250 660,250 
+           Q 720,250 720,190 Z" 
+        fill="url(#ai-grad)" filter="url(#glow-ai)" />
+
+  <!-- Glowing core within the Agent -->
+  <circle cx="540" cy="375" r="15" fill="#ffffff" filter="drop-shadow(0 0 10px #ffffff)" />
+
+  <!-- 3. Hardware LEDs and Controls (Below Screen) -->
+  
+  <!-- LED Panel Bezel -->
+  <rect x="262" y="700" width="500" height="150" rx="75" ry="75" fill="#d1d1d6" stroke="#aeaeb2" stroke-width="4" filter="drop-shadow(0 5px 5px rgba(0,0,0,0.2) inset)" />
+
+  <!-- macOS Window Button Ordering: Red, Yellow, Green -->
+  
+  <!-- LED 1: Red (Inactive) -->
+  <circle cx="362" cy="775" r="35" fill="#1c1c1e" stroke="#3a3a3c" stroke-width="4" />
+  <circle cx="362" cy="775" r="25" fill="#ff453a" fill-opacity="0.3" />
+
+  <!-- LED 2: Yellow (Inactive) -->
+  <circle cx="512" cy="775" r="35" fill="#1c1c1e" stroke="#3a3a3c" stroke-width="4" />
+  <circle cx="512" cy="775" r="25" fill="#ffd60a" fill-opacity="0.3" />
+
+  <!-- LED 3: Green (Active & Glowing) -->
+  <circle cx="662" cy="775" r="35" fill="#1c1c1e" stroke="#3a3a3c" stroke-width="4" />
+  <circle cx="662" cy="775" r="25" fill="#32d74b" filter="url(#glow-green)" />
+
+  <!-- Screw Details -->
+  <circle cx="100" cy="100" r="15" fill="#aeaeb2" stroke="#8e8e93" stroke-width="2" />
+  <line x1="90" y1="90" x2="110" y2="110" stroke="#8e8e93" stroke-width="3" />
+  
+  <circle cx="924" cy="100" r="15" fill="#aeaeb2" stroke="#8e8e93" stroke-width="2" />
+  <line x1="914" y1="90" x2="934" y2="110" stroke="#8e8e93" stroke-width="3" />
+  
+  <circle cx="100" cy="924" r="15" fill="#aeaeb2" stroke="#8e8e93" stroke-width="2" />
+  <line x1="90" y1="914" x2="110" y2="934" stroke="#8e8e93" stroke-width="3" />
+  
+  <circle cx="924" cy="924" r="15" fill="#aeaeb2" stroke="#8e8e93" stroke-width="2" />
+  <line x1="914" y1="914" x2="934" y2="934" stroke="#8e8e93" stroke-width="3" />
+
+</svg>
