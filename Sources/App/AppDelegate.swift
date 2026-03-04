@@ -41,12 +41,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         dailyUsageStore = DailyUsageStore(db: database.dbQueue)
 
         // 2. Initialize adapters & processor
-        let adapter = ClaudeCodeAdapter()
+        let claudeAdapter = ClaudeCodeAdapter()
+        let geminiAdapter = GeminiAdapter()
         eventProcessor = EventProcessor(
             sessionStore: sessionStore,
             eventStore: eventStore,
             dailyUsageStore: dailyUsageStore,
-            adapters: ["claude-code": adapter]
+            adapters: [
+                "claude-code": claudeAdapter,
+                "gemini": geminiAdapter
+            ]
         )
 
         // 3. Initialize HTTP server

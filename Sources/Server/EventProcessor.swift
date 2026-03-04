@@ -24,14 +24,23 @@ actor EventProcessor {
 
     /// Process a hook event payload.
     func process(_ payload: HookPayload) {
-        let adapter = adapters["claude-code"]!
+        // Determine agent type. 
+        // Gemini uses 'SessionEnd', 'BeforeTool', 'AfterTool' and provides a 'timestamp'.
+        let isGemini = payload.timestamp != nil || 
+                       ["SessionEnd", "BeforeTool", "AfterTool", "BeforeAgent", "AfterAgent"].contains(payload.hookEventName)
+        let adapterKey = isGemini ? "gemini" : "claude-code"
+        
+        guard let adapter = adapters[adapterKey] else {
+            print("EventProcessor: No adapter found for \(adapterKey)")
+            return
+        }
 
         // 1. Update session
         let existing = try? sessionStore.find(id: payload.sessionId)
         var session = adapter.updateSession(from: payload, existing: existing)
 
-        // 2. On Stop: parse transcript for supplementary data
-        if payload.hookEventName == "Stop", let transcriptPath = payload.transcriptPath {
+        // 2. On Stop/SessionEnd: parse transcript for supplementary data if available
+        if (payload.hookEventName == "Stop" || payload.hookEventName == "SessionEnd"), let transcriptPath = payload.transcriptPath {
             if let result = transcriptParser.parse(transcriptPath) {
                 // Precise completion status from stop_reason
                 switch result.lastStopReason {
@@ -50,8 +59,9 @@ actor EventProcessor {
                 }
 
                 // Update daily usage
+                let defaultModel = isGemini ? "gemini-2.5-pro" : "claude-sonnet-4-6"
                 let cost = CostCalculator.estimate(
-                    model: session.model ?? "claude-sonnet-4-6",
+                    model: session.model ?? defaultModel,
                     inputTokens: result.totalInputTokens,
                     outputTokens: result.totalOutputTokens
                 )
@@ -70,7 +80,7 @@ actor EventProcessor {
         if payload.hookEventName == "SessionStart" {
             try? dailyUsageStore.increment(
                 date: DailyUsage.todayString,
-                agentType: "claude-code",
+                agentType: adapterKey,
                 sessions: 1
             )
         }
@@ -80,12 +90,17 @@ actor EventProcessor {
         // 4. Create event record
         if var event = adapter.parseEvent(from: payload) {
             // Calculate tool call duration from Pre→Post time difference
-            if payload.hookEventName == "PreToolUse", let toolId = payload.toolUseId {
-                pendingToolCalls[toolId] = Date().timeIntervalSince1970
+            let isPreTool = payload.hookEventName == "PreToolUse" || payload.hookEventName == "BeforeTool"
+            let isPostTool = payload.hookEventName == "PostToolUse" || payload.hookEventName == "AfterTool"
+            let toolId = payload.toolUseId ?? payload.id
+            
+            if isPreTool, let toolId = toolId {
+                pendingToolCalls[toolId] = payload.timestampDate?.timeIntervalSince1970 ?? Date().timeIntervalSince1970
             }
-            if payload.hookEventName == "PostToolUse", let toolId = payload.toolUseId {
+            if isPostTool, let toolId = toolId {
                 if let startTime = pendingToolCalls.removeValue(forKey: toolId) {
-                    event.durationMs = Int((Date().timeIntervalSince1970 - startTime) * 1000)
+                    let endTime = payload.timestampDate?.timeIntervalSince1970 ?? Date().timeIntervalSince1970
+                    event.durationMs = Int((endTime - startTime) * 1000)
                 }
             }
 
