@@ -131,8 +131,9 @@ Agent Hook 事件 (Claude/Gemini)
 | M2 | HTTP Server + Hook 配置 | ✅ |
 | M3 | 简要面板 UI + 独立悬浮窗 | ✅ |
 | M4 | 详情视图 + 事件时间线 | ✅ |
-| M5 | Gemini Agent 接入 | ✅ |
-| M6 | 统计分析 + 原生通知 | 计划中 |
+| M5 | Gemini CLI 接入 | ✅ |
+| M6 | 统计分析看板 | ✅ |
+| M7 | 原生系统通知接入 | 计划中 |
 
 ## License
 
