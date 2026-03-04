@@ -11,8 +11,10 @@ final class EventRouter: Sendable {
 
     /// Handle raw HTTP body data from a hook event.
     func handle(_ data: Data) {
+        print("EventRouter: Received hook payload (\(data.count) bytes)")
         do {
             let payload = try JSONDecoder().decode(HookPayload.self, from: data)
+            print("EventRouter: Decoded payload for session: \(payload.sessionId) - event: \(payload.hookEventName)")
             Task {
                 await processor.process(payload)
             }

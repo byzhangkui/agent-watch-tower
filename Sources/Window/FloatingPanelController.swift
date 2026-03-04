@@ -62,7 +62,7 @@ final class FloatingPanelController {
         panel.isMovableByWindowBackground = true
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.appearance = NSAppearance(named: .darkAqua)
-        panel.backgroundColor = NSColor(red: 30/255.0, green: 30/255.0, blue: 32/255.0, alpha: 0.75)
+        panel.backgroundColor = NSColor(red: 30/255.0, green: 30/255.0, blue: 32/255.0, alpha: 0.98)
 
         panel.minSize = NSSize(width: Constants.panelMinWidth, height: Constants.panelMinHeight)
         panel.maxSize = NSSize(width: Constants.panelMaxWidth, height: Constants.panelMaxHeight)
