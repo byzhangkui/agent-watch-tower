@@ -33,26 +33,24 @@ final class StatusBarController: NSObject {
     }
     
     private func getMenuIcon(isError: Bool = false) -> NSImage? {
-        let name = "menubar-iconTemplate"
+        let name = "menubar-icon"
         var image = NSImage(named: name)
         
         if image == nil {
-            if let url = Bundle.main.url(forResource: name, withExtension: "png") {
+            if let url = Bundle.main.url(forResource: name, withExtension: "pdf") {
                 image = NSImage(contentsOf: url)
             } else {
-                let pngPath = FileManager.default.currentDirectoryPath + "/Resources/\(name).png"
-                if FileManager.default.fileExists(atPath: pngPath) {
-                    image = NSImage(contentsOfFile: pngPath)
+                let localPath = FileManager.default.currentDirectoryPath + "/Resources/\(name).pdf"
+                if FileManager.default.fileExists(atPath: localPath) {
+                    image = NSImage(contentsOfFile: localPath)
                 }
             }
         }
         
         if let image = image {
-            let copy = image.copy() as! NSImage
-            copy.setName(NSImage.Name(name))
-            copy.isTemplate = true
-            copy.size = NSSize(width: 18, height: 18)
-            return copy
+            image.isTemplate = true
+            image.size = NSSize(width: 18, height: 18)
+            return image
         }
         
         let fallback = NSImage(

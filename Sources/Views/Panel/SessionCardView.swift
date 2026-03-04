@@ -7,6 +7,7 @@ struct SessionCardView: View {
     var showTokenUsage: Bool = true
     var onRemove: (() -> Void)? = nil
 
+    @Environment(\.colorScheme) var colorScheme
     @State private var alertPulse = false
     @State private var isHovered = false
 
@@ -153,7 +154,13 @@ struct SessionCardView: View {
     }
 
     private var agentColor: Color {
-        Color(hex: session.agentType.brandColor)
+        let isDark = colorScheme == .dark
+        switch session.agentType {
+        case .claudeCode:
+            return isDark ? Color(hex: "#D49BFF") : Color(hex: "#8B5CF6")
+        case .gemini:
+            return isDark ? Color(hex: "#8AB4F8") : Color(hex: "#2563EB")
+        }
     }
 }
 

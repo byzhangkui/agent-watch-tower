@@ -50,8 +50,8 @@ bundle: release  ## Build release and assemble .app bundle
 	@if [ -f Resources/AppIcon.icns ]; then \
 		cp Resources/AppIcon.icns $(RES_DIR)/AppIcon.icns; \
 	fi
-	@if [ -f Resources/menubar-iconTemplate.png ]; then \
-		cp Resources/menubar-iconTemplate.png $(RES_DIR)/menubar-iconTemplate.png; \
+	@if [ -f Resources/menubar-icon.pdf ]; then \
+		cp Resources/menubar-icon.pdf $(RES_DIR)/menubar-icon.pdf; \
 	fi
 	@echo "==> $(BUNDLE_DIR) ready"
 
