@@ -37,10 +37,10 @@ final class StatusBarController: NSObject {
         var image = NSImage(named: name)
         
         if image == nil {
-            if let url = Bundle.main.url(forResource: name, withExtension: "pdf") {
+            if let url = Bundle.main.url(forResource: name, withExtension: "png") {
                 image = NSImage(contentsOf: url)
             } else {
-                let localPath = FileManager.default.currentDirectoryPath + "/Resources/\(name).pdf"
+                let localPath = FileManager.default.currentDirectoryPath + "/Resources/\(name).png"
                 if FileManager.default.fileExists(atPath: localPath) {
                     image = NSImage(contentsOfFile: localPath)
                 }
