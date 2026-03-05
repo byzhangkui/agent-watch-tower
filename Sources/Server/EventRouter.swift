@@ -11,17 +11,35 @@ final class EventRouter: Sendable {
 
     /// Handle raw HTTP body data from a hook event.
     func handle(_ data: Data) {
-        print("EventRouter: Received hook payload (\(data.count) bytes)")
+        let jsonString = String(data: data, encoding: .utf8) ?? ""
         do {
             let payload = try JSONDecoder().decode(HookPayload.self, from: data)
-            print("EventRouter: Decoded payload for session: \(payload.sessionId) - event: \(payload.hookEventName)")
+            let summary = "Session: \(payload.sessionId)\nAgent: \(payload.agentName ?? "Unknown")"
+            
+            Task { @MainActor in
+                #if DEBUG
+                DebugViewModel.shared.addLog(
+                    eventName: payload.hookEventName,
+                    summary: summary,
+                    rawJson: jsonString
+                )
+                #endif
+            }
+            
             Task {
                 await processor.process(payload)
             }
         } catch {
             print("Failed to decode hook payload: \(error)")
-            if let jsonString = String(data: data, encoding: .utf8) {
-                print("Raw payload: \(jsonString)")
+            
+            Task { @MainActor in
+                #if DEBUG
+                DebugViewModel.shared.addLog(
+                    eventName: "Decode Error",
+                    summary: error.localizedDescription,
+                    rawJson: jsonString
+                )
+                #endif
             }
         }
     }

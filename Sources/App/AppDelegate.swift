@@ -20,11 +20,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var sessionListVM: SessionListViewModel!
 
     // Timers
-    private var statusUpdateTimer: Timer?
     private var cleanupTimer: Timer?
+    private var observer: Any?
 
     // Settings Window
     private var settingsWindow: NSWindow?
+    
+    // Debug Window
+    #if DEBUG
+    private var debugWindow: NSWindow?
+    #endif
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Hide from Dock
@@ -93,8 +98,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self.popoverManager.toggle(relativeTo: button)
         }
 
-        // 8. Start periodic tasks
+        // 8. Start periodic tasks & observers
         startPeriodicTasks()
+        observer = NotificationCenter.default.addObserver(
+            forName: .sessionDidUpdate, object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.updateStatusBarIcon()
+            }
+        }
 
         // 9. Load initial data
         sessionListVM.reload()
@@ -102,10 +114,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         
         // 10. Restore floating panel state
         floatingPanelController.restoreState()
+        
+        #if DEBUG
+        showDebugWindow()
+        #endif
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        statusUpdateTimer?.invalidate()
+        if let observer { NotificationCenter.default.removeObserver(observer) }
         cleanupTimer?.invalidate()
         floatingPanelController?.close()
         eventServer?.stop()
@@ -148,17 +164,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
     }
+    
+    #if DEBUG
+    @MainActor
+    private func showDebugWindow() {
+        if let window = debugWindow, window.isVisible {
+            NSApp.activate(ignoringOtherApps: true)
+            window.makeKeyAndOrderFront(nil)
+            return
+        }
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 800, height: 600),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Developer Debug Panel"
+        window.isReleasedWhenClosed = false
+        window.center()
+
+        let hostingView = NSHostingView(rootView: DebugPanelView())
+        window.contentView = hostingView
+
+        self.debugWindow = window
+        NSApp.activate(ignoringOtherApps: true)
+        window.makeKeyAndOrderFront(nil)
+    }
+    #endif
 
     // MARK: - Periodic Tasks
 
     private func startPeriodicTasks() {
-        // Update status bar icon every 2 seconds
-        statusUpdateTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                self?.updateStatusBarIcon()
-            }
-        }
-
         // Cleanup old data daily (check every hour)
         cleanupTimer = Timer.scheduledTimer(withTimeInterval: 3600, repeats: true) { [weak self] _ in
             try? self?.database.cleanupOldEvents()

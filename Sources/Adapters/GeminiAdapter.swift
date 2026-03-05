@@ -111,8 +111,8 @@ struct GeminiAdapter: AgentAdapter {
                 session.updatedAt = now
 
             case "AfterTool":
-                session.status = .running
-                session.currentAction = nil  // Clear after tool finishes; next BeforeTool will set it
+                session.status = .thinking
+                session.currentAction = "Thinking..."
                 session.updatedAt = now
 
             case "SessionEnd":

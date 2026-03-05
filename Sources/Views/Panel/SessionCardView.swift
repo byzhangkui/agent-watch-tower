@@ -93,6 +93,14 @@ struct SessionCardView: View {
                                 .font(.system(size: 13, design: .monospaced))
                                 .foregroundStyle(.white)
                                 .lineLimit(1)
+                        } else if session.status == .thinking {
+                            Image(systemName: "ellipsis.bubble")
+                                .font(.system(size: 10))
+                                .foregroundStyle(.blue)
+                            Text(action)
+                                .font(.system(size: 13, design: .monospaced))
+                                .foregroundStyle(Color.white.opacity(0.8))
+                                .lineLimit(1)
                         } else {
                             Text(action)
                                 .font(.system(size: 13, design: .monospaced))

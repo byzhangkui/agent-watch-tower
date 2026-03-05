@@ -117,8 +117,8 @@ struct ClaudeCodeAdapter: AgentAdapter {
                 session.updatedAt = now
 
             case "PostToolUse":
-                session.status = .running
-                session.currentAction = nil  // Clear after tool finishes; next PreToolUse will set it
+                session.status = .thinking
+                session.currentAction = "Thinking..."
                 session.updatedAt = now
                 // Check if it's a TodoWrite to update progress
                 if payload.toolName == "TodoWrite" {
